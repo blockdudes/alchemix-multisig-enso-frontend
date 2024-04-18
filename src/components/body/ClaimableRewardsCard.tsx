@@ -28,7 +28,7 @@ const assets = [
   },
 ];
 
-function getTotalAssets(assets) {
+function getTotalAssets(assets: any) {
     let totalAmount = 0;
     for (const asset of assets) {
       totalAmount += parseInt(asset.amount);
