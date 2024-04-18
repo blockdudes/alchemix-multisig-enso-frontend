@@ -47,11 +47,11 @@ const DesiredOutputCard = ({totalBalance = 110}) => {
   return (
     <>
       <div className="claimableRewards m-5">
-        <Card className="w-[350px]">
+        <Card className="w-[400px] h-[550px]">
           <CardHeader>
             <CardTitle>Desired Output</CardTitle>
             <CardDescription>
-              Deploy your new project in one-click.
+              Swap reward tokens
             </CardDescription>
           </CardHeader>
           <CardContent>
