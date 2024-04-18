@@ -9,7 +9,7 @@ import {
 import { Checkbox } from "../ui/checkbox";
 
 
-const ClaimableRewardsTable = (props) => {
+const ClaimableRewardsTable = (props: any) => {
   return (
     <Table>
       <TableHeader>
@@ -20,7 +20,7 @@ const ClaimableRewardsTable = (props) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {props.toClaim.map((asset) => (
+        {props.toClaim.map((asset: any) => (
           <TableRow key={asset.tokenName}>
             <TableCell className="font-medium">
               <Checkbox id="asset" />
