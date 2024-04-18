@@ -1,11 +1,13 @@
-import Navbar from "./components/header/Navbar"
-function App() {
 
+import Navbar from "./components/header/Navbar"
+import ClaimableRewardsCard from "./components/body/ClaimableRewardsCard";
+function App() {
   return (
     <>
-    <Navbar/>
+      <Navbar />
+      <ClaimableRewardsCard />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
