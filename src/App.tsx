@@ -1,18 +1,14 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
+import { ThemeProvider } from "@/components/theme-provider";
+import DashboardPage from "./components/body/DashboardPage";
 
 function App() {
-
   return (
     <>
-      <h1 className="text-3xl font-bold underline ">
-        Welcome
-      </h1>
-      <div>
-      <Button>Click me</Button>
-    </div>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <DashboardPage></DashboardPage>
+      </ThemeProvider>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
