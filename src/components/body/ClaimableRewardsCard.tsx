@@ -46,11 +46,11 @@ const assets = [
 ];
 
 
-const ClaimableRewardsCard = () => {
+const ClaimableRewardsCard = ({totalValue, setTotalValue}) => {
   const [items, setItems] = useState(assets);
-  const [totalValue, setTotalValue] = useState(0);
-
+  
   const handleSelect = (id) => {
+    console.log('handleSelect called');
     setItems(items.map(item =>
       item.id===id ? {...item, tick:!item.tick} : item
       ));
@@ -62,7 +62,7 @@ const ClaimableRewardsCard = () => {
   return (
     <>
       <div className="m-5">
-        <Card className="w-[400px] h-[565px]">
+        <Card className="w-[400px] h-[480px]">
           <CardHeader>
             <CardTitle>Claim Assets</CardTitle>
             <CardDescription>

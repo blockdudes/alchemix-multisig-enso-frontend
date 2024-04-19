@@ -7,7 +7,7 @@ import { createWallet, inAppWallet, walletConnect } from "thirdweb/wallets";
 import AuthenticationPage from "./components/body/AuthenticationPage";
 import Footer from "./components/footer/Footer";
 import { useActiveWalletConnectionStatus } from "thirdweb/react";
-
+import { useState } from 'react';
 
 const metaData = [
   "ALCX bribed since last claim: 4000 ALCX",
@@ -18,6 +18,9 @@ const metaData = [
 
 const App = () => {
   console.log(useActiveWalletConnectionStatus())
+
+  const [totalValue, setTotalValue] = useState(0);
+
   return (
     <>
     {/* connected" | "disconnected" | "connecting"; */}
@@ -37,7 +40,7 @@ const App = () => {
               </div>
             </div>
             <div className="flex flex-row gap-10 items-start justify-center px-4">
-              <ClaimableRewardsCard />
+              <ClaimableRewardsCard state={totalValue, setTotalValue}/>
               <DesiredOutputCard />
             </div>
             <Button className="w-[100px] place-self-center">SWAP</Button>

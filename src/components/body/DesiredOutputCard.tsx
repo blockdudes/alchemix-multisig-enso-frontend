@@ -106,7 +106,7 @@ const DesiredOutputCard = ({ totalBalance = 100 }) => {
   return (
     <>
       <div className="claimableRewards m-5">
-        <Card className="w-[400px] h-[565px]">
+        <Card className="w-[400px] h-[480px]">
           <CardHeader>
             <CardTitle>Desired Output</CardTitle>
             <CardDescription>
