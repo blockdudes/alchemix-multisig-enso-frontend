@@ -10,7 +10,7 @@ import {
 const MetadataCard = (props) => {
   return (
     <div>
-      <Card className="w-[400px] self-end pt-3">
+      <Card className="w-[400px] pt-4">
         <CardContent>
         {props.text}
         </CardContent>

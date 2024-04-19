@@ -47,7 +47,7 @@ const DesiredOutputCard = ({totalBalance = 110}) => {
   return (
     <>
       <div className="claimableRewards m-5">
-        <Card className="w-[400px] h-[550px]">
+        <Card className="w-[400px] h-[565px]">
           <CardHeader>
             <CardTitle>Desired Output</CardTitle>
             <CardDescription>
@@ -83,7 +83,7 @@ const DesiredOutputCard = ({totalBalance = 110}) => {
             </form>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button>Total Value <span className="ml-5">{totalBalance}</span></Button>
+            <Button className="w-[150px]">Total Value: <span className="ml-5">{totalBalance}</span></Button>
           </CardFooter>
         </Card>
       </div>
