@@ -142,7 +142,7 @@ const DesiredOutputCard = ({ totalBalance = 100 }) => {
                           <div className="table-cell">{item.token}</div>
                           <Slider
                             defaultValue={[0]}
-                            max={totalBalance - data.length + 1}
+                            max={totalBalance - data.filter(item => item.selected).length + 1}
                             min={1}
                             step={1}
                             value={[item.balance]}
