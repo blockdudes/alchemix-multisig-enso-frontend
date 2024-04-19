@@ -4,7 +4,6 @@ import { createThirdwebClient } from "thirdweb";
 import { arbitrum, ethereum, optimism } from "thirdweb/chains";
 
 
-
 const client = createThirdwebClient({
     clientId: import.meta.env.VITE_THIRDWEB_CLIENT_KEY,
   });
