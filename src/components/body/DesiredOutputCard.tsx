@@ -22,11 +22,6 @@ const DesiredOutputCard = ({ totalBalance = 100 }) => {
     { token: 'Btc in unisat', balance: 0, selected: false },
   ]);
 
-  // const handleSliderChange = (index: number, newValue: number) => {
-  //   setData(prevData => prevData.map((item, i) => 
-  //     i === index ? { ...item, balance: newValue } : item
-  //   ));
-  // };
 
   // const handleSliderChange = (index: number, newValue: number) => {
 
@@ -111,11 +106,11 @@ const DesiredOutputCard = ({ totalBalance = 100 }) => {
   return (
     <>
       <div className="claimableRewards m-5">
-        <Card className="w-[400px]">
+        <Card className="w-[400px] h-[550px]">
           <CardHeader>
             <CardTitle>Desired Output</CardTitle>
             <CardDescription>
-              Deploy your new project in one-click.
+              Swap reward tokens
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -125,7 +120,7 @@ const DesiredOutputCard = ({ totalBalance = 100 }) => {
                   <div className="flex justify-between p-2 pl-12 text-slate-400 text-sm  ">
                     <div className="h-0 my-0 mx-0 border-0 opacity-0" />
                     <div className="table-cell">Swapable Token</div>
-                    <div className="table-cell">Balance</div>
+                    <div className="table-cell">Balance($)</div>
                   </div>
                   <hr />
                   {data.map((item, index) => {

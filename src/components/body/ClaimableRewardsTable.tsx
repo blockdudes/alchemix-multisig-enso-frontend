@@ -14,9 +14,9 @@ const ClaimableRewardsTable = (props: any) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[100px]"></TableHead>
+          <TableHead className="w-[80px]"></TableHead>
           <TableHead>Claimable Tokens</TableHead>
-          <TableHead className="text-right">Balance</TableHead>
+          <TableHead className="text-right">Balance($)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

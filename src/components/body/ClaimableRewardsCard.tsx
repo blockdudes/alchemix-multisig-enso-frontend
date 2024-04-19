@@ -40,7 +40,7 @@ const ClaimableRewardsCard = () => {
   return (
     <>
       <div className="claimableRewards m-5">
-        <Card className="w-[400px]">
+        <Card className="w-[400px] h-[550px]">
           <CardHeader>
             <CardTitle>Claim Assets</CardTitle>
             <CardDescription>
@@ -50,7 +50,7 @@ const ClaimableRewardsCard = () => {
           <CardContent>
             <ClaimableRewardsTable toClaim={assets}/>
           </CardContent>
-          <CardFooter className="flex justify-between items-center">
+          <CardFooter className="flex justify-center align-bottom">
             <Button>Total Value: {getTotalAssets(assets)}</Button>
           </CardFooter>
         </Card>
