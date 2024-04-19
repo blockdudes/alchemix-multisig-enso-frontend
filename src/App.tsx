@@ -3,7 +3,11 @@ import DesiredOutputCard from "./components/body/DesiredOutputCard";
 import ClaimableRewardsCard from "./components/body/ClaimableRewardsCard";
 import MetadataCard from "./components/body/MetadataCard";
 import { Button } from "./components/ui/button";
-import LoginPage from "./components/body/LoginPage";
+import { createWallet, inAppWallet, walletConnect } from "thirdweb/wallets";
+import AuthenticationPage from "./components/body/AuthenticationPage";
+import Footer from "./components/footer/Footer";
+import { useActiveWalletConnectionStatus } from "thirdweb/react";
+
 
 const metaData = [
   "ALCX bribed since last claim: 4000 ALCX",
@@ -13,11 +17,14 @@ const metaData = [
 ];
 
 const App = () => {
+  console.log(useActiveWalletConnectionStatus())
   return (
     <>
-      <Navbar />
+    {/* connected" | "disconnected" | "connecting"; */}
       {
-        false ? (
+        useActiveWalletConnectionStatus() === "connected" ? (
+          <>
+          <Navbar />
           <div className="flex flex-col ">
             <div className="flex flex-row gap-10 items-center justify-center ">
               <div className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
@@ -35,10 +42,12 @@ const App = () => {
             </div>
             <Button className="w-[100px] place-self-center">SWAP</Button>
           </div>
+          </>
         ) : (
-          <LoginPage />
+          <AuthenticationPage/>
         )
       }
+      <Footer/>
     </>
   );
 };

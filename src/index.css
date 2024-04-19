@@ -1,6 +1,8 @@
-@tailwind base;
+
+  @tailwind base;
   @tailwind components;
   @tailwind utilities;
+
 
   @layer base {
     :root {
@@ -73,4 +75,8 @@
     body {
       @apply bg-background text-foreground;
     }
+    
   }
+
+  
+  
