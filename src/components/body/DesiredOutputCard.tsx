@@ -108,7 +108,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                   <hr />
                   {data.map((item, index) => {
                     return (
-                      <div key={index} className="flex justify-between items-center p-2">
+                      <div key={index} className="flex justify-between items-center p-2 gap-4">
                         <div className="table-cell pt-4">
                           <Checkbox
                             id={`asset-${index}`}
@@ -116,7 +116,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                             disabled={totalBalance == 0}
                           />
                         </div>
-                        <div className="flex flex-col w-[60%] gap-2">
+                        <div className="flex flex-col w-[60%] gap-2 pl-4">
                           <div className="table-cell">{item.token}</div>
                           <Slider
                             defaultValue={[0]}
@@ -130,7 +130,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
 
 
                         </div>
-                        <div className="table-cell pt-4">{totalBalance ? (item.balance / (totalBalance ?? 1) * 100).toFixed(2) : 0 }</div>
+                        <div className="table-cell pt-4 w-24 text-right">{totalBalance ? (item.balance / (totalBalance ?? 1) * 100).toFixed(2) : 0 } %</div>
 
                       </div>
                     )
@@ -140,7 +140,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col justify-center">
-            <Button className="w-[200px]">Current Selected : <span className="ml-5">{totalUsed}</span></Button>
+            <Button className="w-[200px]">Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span></Button>
           </CardFooter>
 
         </Card>
