@@ -46,7 +46,8 @@ const assets = [
 ];
 
 
-const ClaimableRewardsCard = ({totalValue, setTotalValue}) => {
+const ClaimableRewardsCard = ({totalValue, setTotalValue}: any) => {
+
   const [items, setItems] = useState(assets);
   
   const handleSelect = (id) => {
@@ -61,7 +62,7 @@ const ClaimableRewardsCard = ({totalValue, setTotalValue}) => {
 
   return (
     <>
-      <div className="m-5">
+      <div className="m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
         <Card className="w-[400px] h-[480px]">
           <CardHeader>
             <CardTitle>Claim Assets</CardTitle>
@@ -82,14 +83,11 @@ const ClaimableRewardsCard = ({totalValue, setTotalValue}) => {
                 {assets.map((asset: any, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
-                      <input
-                        type="checkBox"
-                        onChange={() => handleSelect(asset.id)}>
-                      </input>
-                      <label
-                        htmlFor="asset"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      ></label>
+                       <Checkbox
+                            id={`asset-${index}`}
+                            onCheckedChange={() => handleSelect(asset.id)}
+
+                            />
                     </TableCell>
                     <TableCell className="font-medium">{asset.tokenName}</TableCell>
                     <TableCell className="text-right">{asset.amount}</TableCell>
