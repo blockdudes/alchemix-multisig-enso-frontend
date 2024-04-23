@@ -29,7 +29,6 @@ interface Assets {
 const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for demonstration
 
     const totalValue = assets.reduce((total : number, item: Assets) => item.tick ? total + item.amount : total, 0);
-    console.log("totalValue", totalValue);
 
     return (
         <>
@@ -45,23 +44,23 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[80px]"></TableHead>
+                                    {/* <TableHead className="w-[80px]"></TableHead> */}
                                     <TableHead>Claimable Tokens</TableHead>
-                                    <TableHead className="text-right">Balance($)</TableHead>
+                                    {/* <TableHead className="text-right">Balance($)</TableHead> */}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {assets.map((asset: Assets, index : number) => (
                                     <TableRow key={index}>
-                                        <TableCell className="font-medium">
+                                        {/* <TableCell className="font-medium">
                                             <Checkbox
                                                 id={`asset-${index}`}
                                                 checked={asset.tick}
                                                 disabled
                                             />
-                                        </TableCell>
+                                        </TableCell> */}
                                         <TableCell className="font-medium">{asset.tokenName}</TableCell>
-                                        <TableCell className="text-right">{asset.amount}</TableCell>
+                                        {/* <TableCell className="text-right">{asset.amount}</TableCell> */}
                                     </TableRow>
                                 ))}
                             </TableBody>

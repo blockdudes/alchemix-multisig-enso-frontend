@@ -3,6 +3,7 @@ import { useActiveWalletConnectionStatus, useIsAutoConnecting , useConnectedWall
 
 
 export const ProtectedRoute: React.FC<React.PropsWithChildren> = ({ children }) => {
+   
     const wallets = useConnectedWallets();
     console.log("chekc 0",wallets)
 

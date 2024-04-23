@@ -280,7 +280,6 @@ export const buildClaimAndSwapTx = async (
     },
   };
 
-  console.log(outputTx)
   return outputTx;
 };
 
@@ -401,8 +400,10 @@ const getTransactionQueue = async (safeAddress: string, chainId: number) => {
 };
 
 export const getAllTransations = async () => {
+  let multiSigAddress = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
 
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
+  // const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
+  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768");
 
 
   const safeApiKit = new SafeApiKit({
@@ -419,9 +420,13 @@ export const getAllTransations = async () => {
 
 export const getPendingTransaction = async () => {
 
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
+  let multiSigAddress = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
 
 
+  // const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
+  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768");
+  
+  
   const safeApiKit = new SafeApiKit({
     chainId: (await ethersProvider.getNetwork()).chainId
   });
@@ -432,6 +437,8 @@ export const getPendingTransaction = async () => {
   return transactions;
 
 }
+
+
 
 
 async function executeTransaction(signedTx: any) {
