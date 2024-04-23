@@ -46,24 +46,24 @@ const assets = [
 ];
 
 
-const ClaimableRewardsCard = ({totalValue, setTotalValue}: any) => {
+const ClaimableRewardsCard = ({totalValue}: any) => {
 
   const [items, setItems] = useState(assets);
   
-  const handleSelect = (id) => {
-    console.log('handleSelect called');
-    setItems(items.map(item =>
-      item.id===id ? {...item, tick:!item.tick} : item
-      ));
-    setTotalValue(items.reduce((total, item) =>
-    item.id===id ? total + (item.tick ? -item.amount:item.amount): total,totalValue
-    ));
-  };
+  // const handleSelect = (id: number) => {
+  //   console.log('handleSelect called');
+  //   setItems(items.map(item =>
+  //     item.id===id ? {...item, tick:!item.tick} : item
+  //     ));
+  //   setTotalValue(items.reduce((total, item) =>
+  //   item.id===id ? total + (item.tick ? -item.amount:item.amount): total,totalValue
+  //   ));
+  // };
 
   return (
     <>
       <div className="m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-        <Card className="w-[400px] h-[480px]">
+        <Card className="w-[400px] h-[480px] relative">
           <CardHeader>
             <CardTitle>Claim Assets</CardTitle>
             <CardDescription>
@@ -74,32 +74,32 @@ const ClaimableRewardsCard = ({totalValue, setTotalValue}: any) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]"></TableHead>
-                  <TableHead>Claimable Tokens</TableHead>
-                  <TableHead className="text-right">Balance($)</TableHead>
+                  {/* <TableHead className="w-[80px]"></TableHead> */}
+                  <TableHead className="text-center">Claimable Tokens</TableHead>
+                  {/* <TableHead className="text-right">Balance($)</TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {assets.map((asset: any, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
+                  <TableRow key={index} className="text-center">
+                    {/* <TableCell className="font-medium">
                        <Checkbox
                             id={`asset-${index}`}
                             onCheckedChange={() => handleSelect(asset.id)}
 
                             />
-                    </TableCell>
-                    <TableCell className="font-medium">{asset.tokenName}</TableCell>
-                    <TableCell className="text-right">{asset.amount}</TableCell>
+                    </TableCell> */}
+                    <TableCell className="font-medium ">{asset.tokenName}</TableCell>
+                    {/* <TableCell className="text-right">{asset.amount}</TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </CardContent>
-          <CardFooter className="flex justify-center align-bottom">
-            <Button className="w-[150px]">
+          <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom">
+            <Button className="w-full">
               Total Value:{" "}
-              <span className="ml-5">{totalValue}</span>
+              <span className="ml-5">{(totalValue ?? 0).toFixed(2)}</span>
             </Button>
           </CardFooter>
         </Card>

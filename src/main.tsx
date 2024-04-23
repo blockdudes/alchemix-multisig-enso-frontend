@@ -8,11 +8,10 @@ import { ThirdwebProvider } from "thirdweb/react";
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <ThirdwebProvider>
-        <App />
-      </ThirdwebProvider>
-    </ThemeProvider>
-  </React.StrictMode>,
+  <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThirdwebProvider>
+      <App />
+    </ThirdwebProvider>
+  </ThemeProvider>
+
 )

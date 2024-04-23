@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "../ui/checkbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 interface TokenData {
@@ -26,10 +26,10 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
 
   const [totalUsed, setTotalUsed] = useState(0);
   const [data, setData] = useState([
-    { token: 'Eth in uniswap', balance: 0, selected: false },
-    { token: 'Btc in unisat', balance: 0, selected: false },
-    { token: 'Eth in uniswap', balance: 0, selected: false },
-    { token: 'Btc in unisat', balance: 0, selected: false },
+    { token: 'USDC', balance: 0, selected: false },
+    // { token: 'Btc in unisat', balance: 0, selected: false },
+    // { token: 'Eth in uniswap', balance: 0, selected: false },
+    // { token: 'Btc in unisat', balance: 0, selected: false },
   ]);
 
   const updateTotalUsed = () => {
@@ -53,6 +53,9 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
             }
         });
     } else {
+         // Set the balance of the deselected item to 0
+         newData[index].balance = 0;
+
         // Redistribute the balance among the remaining selected items
         const selectedItems = newData.filter(item => item.selected);
         const newPercentage = selectedItems.length > 0 ? 100 / selectedItems.length : 0;
@@ -64,6 +67,42 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
     setData(newData);
     updateTotalUsed();
 };
+
+// const toggleSelected = (index: number) => {
+//   const newData = [...data];
+//   const isSelectedNow = !newData[index].selected;
+
+  
+//   newData[index].selected = isSelectedNow;
+//   console.log(`Toggling selection for item at index ${index}. Currently selected: ${newData[index].selected}`);
+//   if (isSelectedNow) {
+    
+//     // Calculate the new percentage if this token is now selected
+//     const selectedItemsCount = newData.filter(item => item.selected).length;
+//     const newPercentage = 100 / selectedItemsCount;
+//     console.log(`Selecting item at index ${index}. New percentage: ${newPercentage}`);
+//       newData.forEach((item, idx) => {
+//           if (item.selected) {
+//               item.balance = (newPercentage / 100) * (totalBalance || 1);
+//               console.log(`Updated balance for item at index ${idx}: ${item.balance}`);
+//           }
+//       });
+//   } else {
+//       // Redistribute the balance among the remaining selected items
+//       const selectedItems = newData.filter(item => item.selected);
+//       const newPercentage = selectedItems.length > 0 ? 100 / selectedItems.length : 0;
+//       console.log(`Deselecting item at index ${index}. New percentage for remaining items: ${newPercentage}`);
+
+//       selectedItems.forEach(item => {
+//           item.balance = (newPercentage / 100) * (totalBalance || 1);
+//           console.log(`Updated balance for remaining selected item: ${item.balance}`);
+//       });
+//   }
+
+//   setData(newData);
+//   updateTotalUsed();
+// };
+
 
 
 
@@ -81,15 +120,14 @@ const handleSliderChange = (index : number, newPercentage : number) => {
       });
   }
   console.log(newData)
-  setData(newData);
-};
+  setData(newData);};
 
 
 
   return (
     <>
       <div className="claimableRewards m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-        <Card className="w-[400px] h-[480px]">
+        <Card className="w-[400px] h-[480px] relative">
           <CardHeader>
             <CardTitle>Desired Output</CardTitle>
             <CardDescription>
@@ -98,7 +136,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
           </CardHeader>
           <CardContent>
             <form>
-              <div className="grid w-full items-center gap-4">
+              <div className="w-full items-center gap-4">
                 <div>
                   <div className="flex justify-between p-2 pl-12 text-slate-400 text-sm  ">
                     <div className="h-0 my-0 mx-0 border-0 opacity-0" />
@@ -139,8 +177,11 @@ const handleSliderChange = (index : number, newPercentage : number) => {
               </div>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col justify-center">
-            <Button className="w-[200px]">Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span></Button>
+          <CardFooter className="absolute bottom-0 w-full flex flex-col justify-center gap-1 ">
+            <CardDescription className="w-full text-right ">
+            Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
+            </CardDescription>
+            <Button className="w-full" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
           </CardFooter>
 
         </Card>
