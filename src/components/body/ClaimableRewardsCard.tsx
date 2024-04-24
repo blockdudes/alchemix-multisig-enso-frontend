@@ -96,7 +96,7 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
             </Table>
           </CardContent>
           <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
-            <Button className="w-full hover:bg-white">
+            <Button className="w-[150px] w-full cursor-auto pointer-events-none">
               Total Value:{" "}
               <span className="ml-5">{(totalValue ?? 0).toFixed(2)}</span>
             </Button>

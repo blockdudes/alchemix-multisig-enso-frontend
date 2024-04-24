@@ -67,7 +67,7 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                         </Table>
                     </CardContent>
                     <CardFooter className="flex justify-center align-bottom">
-                        <Button className="w-[150px] w-full">
+                        <Button className="w-[150px] w-full cursor-auto pointer-events-none">
                             Total Value: <span className="ml-5">{totalValue.toFixed(2)}</span>
                         </Button>
                     </CardFooter>

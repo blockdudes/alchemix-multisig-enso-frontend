@@ -18,6 +18,7 @@ module.exports = {
     },
     extend: {
       colors: {
+        premium_btn: "#f5c09a",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

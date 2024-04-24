@@ -14,6 +14,7 @@ import { Transaction } from "./Transaction";
 import ReadOnlyRewardsCard from "@/components/ui/ReadonlyRewardCard";
 import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard";
 import { SAFE_TRANSACTION_ORIGIN } from "@/lib/constants";
+import Loader from "@/components/ui/Loader";
 
 
 interface TokenData {
@@ -44,6 +45,8 @@ interface EnsoTx {
 export const MainPage = () => {
   const [transactionData, setTransactionData] = useState<EnsoTx | null>(null);
   const [transactionQueue, setTransactionQueue] = useState<any>(null);
+  // const [isLoading, setIsLoading] = useState(true);
+  // const walletConnectionStatus = useActiveWalletConnectionStatus();
 
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
@@ -156,6 +159,7 @@ export const MainPage = () => {
       const result = await buildClaimAndSwapTx("1", import.meta.env.VITE_MULTISIG_ADDRESS, import.meta.env.VITE_SAFE_OWNER_ADDRESS);
       console.log(result)
       setTransactionData(result);
+      // setIsLoading(false);
 
     } catch (error) {
       console.error(error);
@@ -220,53 +224,68 @@ export const MainPage = () => {
 
   //   fetchData();
   // }, []);
+  // if (isLoading) {
+  //   return (
+  //     <div className='flex items-center justify-center h-screen'>
+  //       <Loader />
+  //     </div>
+  //   )
+  // }
 
   return (
     <>
       {
         useActiveWalletConnectionStatus() === "connected" ? (
           <>
-
             <Navbar />
             {
-              true ? (
-                // (transactionQueue != null && transactionQueue?.count > 0) ? (
+              transactionData ? (
                 <>
-                  <div className="flex flex-row gap-10 items-start justify-center px-4">
-                    <ReadOnlyRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
-                    <ReadonlyDesiredOutputCard tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)} />
-                  </div>
-                  <div className="border p-10 rounded">
-                    <Transaction />
-                  </div>
+                {
+                  // false ? (
+                    (transactionQueue != null && transactionQueue?.count > 0) ? (
+                    <>
+                      <div className="flex flex-row gap-10 items-start justify-center px-4">
+                        <ReadOnlyRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
+                        <ReadonlyDesiredOutputCard tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)} />
+                      </div>
+                      <div className="border p-10 rounded">
+                        <Transaction />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col ">
+                        {/* <div className="flex flex-row gap-10 items-center justify-center ">
+                      {Object.entries(metaData).map(([groupName, items], index) => (
+                        <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
+                          {items.map((item, itemIndex) => (
+                            <MetadataCard
+                              key={itemIndex}
+                              text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div> */}
+                        <div className="flex flex-row gap-10 items-start justify-center px-4">
+                          <ClaimableRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
+                          <DesiredOutputCard totalBalance={sumClaimAndSwapAmount} />
+                        </div>
+                      </div>
+                      <div className="flex justify-center py-4">
+                        <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={transactionQueue?.count > 0 || true} />
+                      </div>
+                    </>
+                  )
+                }
                 </>
               ) : (
-                <>
-                  <div className="flex flex-col ">
-                    {/* <div className="flex flex-row gap-10 items-center justify-center ">
-                  {Object.entries(metaData).map(([groupName, items], index) => (
-                    <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-                      {items.map((item, itemIndex) => (
-                        <MetadataCard
-                          key={itemIndex}
-                          text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div> */}
-                    <div className="flex flex-row gap-10 items-start justify-center px-4">
-                      <ClaimableRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
-                      <DesiredOutputCard totalBalance={sumClaimAndSwapAmount} />
-                    </div>
-                  </div>
-                  <div className="flex justify-center py-4">
-                    <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={transactionQueue?.count > 0 || true} />
-                  </div>
-                </>
+                <div>
+                  <Loader />
+                </div>
               )
             }
-
           </>
         ) : (
           <AuthenticationPage />

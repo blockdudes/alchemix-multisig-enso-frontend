@@ -181,7 +181,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
             <CardDescription className="w-full text-right ">
             Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
             </CardDescription>
-            <Button className="w-full hover:bg-white" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
+            <Button className="w-[150px] w-full cursor-auto pointer-events-none" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
           </CardFooter>
 
         </Card>
