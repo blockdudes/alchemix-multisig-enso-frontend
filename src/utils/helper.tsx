@@ -1,9 +1,9 @@
+import { ETH_FORK_RPC_URL } from '@/lib/constants';
 import { ethers } from 'ethers';
 
-// const provider = new ethers.JsonRpcProvider('https://rpc.ankr.com/eth');
-const provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768");
+const provider = new ethers.JsonRpcProvider(ETH_FORK_RPC_URL);
 
-const privateKey = import.meta.env.VITE_SECRET_KEY;
+const privateKey = import.meta.env.VITE_ANVIL_SECRET_KEY;
 
 const wallet = new ethers.Wallet(privateKey, provider);
 

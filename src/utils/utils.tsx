@@ -5,6 +5,7 @@ import { OperationType } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit from '@safe-global/api-kit';
+import { ETH_RPC_URL, multiSigAddress, ETH_FORK_RPC_URL } from "@/lib/constants";
 
 
 
@@ -18,7 +19,6 @@ const tenderlyUserName = "amritjain";
 const tenderlyProjectApi = `${tenderlyApi}/account/${tenderlyUserName}/project/${tenderlyProjectName}`;
 const tenderlyApiKey = "0zBCBQ1AK8PKm51GbN5k9bopBGPXRhmF";
 const safeOwner: string = "0x5788F90196954A272347aEe78c3b3F86F548D0a9";
-const multiSigAddress: string = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9";
 const chainId: number = 1;
 
 const threePoolManagerAddress = "0x9735f7d3ea56b454b24ffd74c58e9bd85cfad31b";
@@ -400,10 +400,8 @@ const getTransactionQueue = async (safeAddress: string, chainId: number) => {
 };
 
 export const getAllTransations = async () => {
-  let multiSigAddress = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
 
-  // const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768");
+  const ethersProvider = new ethers.JsonRpcProvider(ETH_FORK_RPC_URL);
 
 
   const safeApiKit = new SafeApiKit({
@@ -420,12 +418,7 @@ export const getAllTransations = async () => {
 
 export const getPendingTransaction = async () => {
 
-  let multiSigAddress = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
-
-
-  // const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768");
-  
+  const ethersProvider = new ethers.JsonRpcProvider(ETH_FORK_RPC_URL);
   
   const safeApiKit = new SafeApiKit({
     chainId: (await ethersProvider.getNetwork()).chainId

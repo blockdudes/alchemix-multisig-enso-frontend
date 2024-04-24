@@ -179,13 +179,13 @@ export const Transaction = () => {
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
-    const multisigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
+    const multiSigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
 
 
 
     const fetchdata = async () => {
         try {
-            const result = await buildClaimAndSwapTx("1", multisigAddress, "0x5788F90196954A272347aEe78c3b3F86F548D0a9");
+            const result = await buildClaimAndSwapTx("1", multiSigAddress, "0x5788F90196954A272347aEe78c3b3F86F548D0a9");
             console.log("take",result)
             return result
         } catch (error) {
@@ -224,7 +224,7 @@ export const Transaction = () => {
         const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
 
         // const protocol = new protocolKit();
-        const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" });
+        const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
         try {
 
@@ -241,7 +241,7 @@ export const Transaction = () => {
 
 
             await protocol.connect(
-                { ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" }
+                { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
             )
 
 
@@ -271,12 +271,12 @@ export const Transaction = () => {
 
         // const protocol = new protocolKit();
         try {
-            const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" });
+            const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
             const reject_transasction = await protocol.createRejectionTransaction(nonce)
 
             await protocol.connect(
-                { ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" }
+                { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
             )
 
 

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fork": "anvil --fork-url https://rpc.ankr.com/eth"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",
@@ -22,6 +23,7 @@
     "@safe-global/api-kit": "^2.3.0",
     "@safe-global/protocol-kit": "^3.0.2",
     "@safe-global/safe-core-sdk-types": "^4.0.2",
+    "anvil": "^0.0.6",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",

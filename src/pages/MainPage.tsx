@@ -6,14 +6,16 @@ import PremiumButton from "@/components/ui/PremiumButton";
 import { buildClaimAndSwapTx, getPendingTransaction } from "@/utils/utils";
 import SafeApiKit from "@safe-global/api-kit";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
-import { OperationType, SafeTransaction, SafeTransactionData } from "@safe-global/safe-core-sdk-types";
+import { OperationType, SafeMultisigTransactionResponse, SafeTransaction, SafeTransactionData } from "@safe-global/safe-core-sdk-types";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useActiveWalletConnectionStatus } from "thirdweb/react";
 import { Transaction } from "./Transaction";
 import ReadOnlyRewardsCard from "@/components/ui/ReadonlyRewardCard";
 import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard";
-import { SAFE_TRANSACTION_ORIGIN } from "@/lib/constants";
+import { OWNER1_ADDRESS, SAFE_TRANSACTION_ORIGIN } from "@/lib/constants";
+import anvil from "@/utils/anvil";
+import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 
 
 interface TokenData {
@@ -52,14 +54,9 @@ export const MainPage = () => {
   const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
   const multiSigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
 
+  const handleGetTransaction = async (safeTxHash: string) => {
 
-  const handleSwap = async () => {
-
-    const data = await getPendingTransaction()
-    if (data.count > 0) {
-      throw new Error("There are pending transactions");
-    }
-
+    console.log("enter")
     const ethersProvider = new ethers.BrowserProvider(window.ethereum)
     const signer = await ethersProvider.getSigner()
 
@@ -69,38 +66,89 @@ export const MainPage = () => {
       chainId: (await ethersProvider.getNetwork()).chainId
     });
 
+   try {
+    const tx: SafeMultisigTransactionResponse = await safeApiKit.getTransaction(safeTxHash)
+    console.log("transaction",tx)
+   } catch (error) {
+    throw error;
+   }
+
+  }
+
+  const handleSwap = async () => {
+
+
+    const data = await getPendingTransaction()
+    if (data.count > 0) {
+      throw new Error("There are pending transactions");
+    }
+
+    // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
+    // const signer = await ethersProvider.getSigner()
+    const signer = await anvil.setup(1,OWNER1_ADDRESS)
+
+    const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+
+    const safeApiKit = new SafeApiKit({
+      chainId: 1n
+    });
+
     // const protocol = new protocolKit();
-    const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" });
+    const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
 
-    let safeTransaction: SafeTransaction | null = transactionData && await protocol.createTransaction({
-      transactions: [{
-        to: transactionData.to,
-        value: transactionData.value,
-        data: transactionData.data,
-        operation: OperationType.DelegateCall, // required for security
-      }]
-    }) || null;
+    try {
+      console.log("enter")
+      let safeTransaction: SafeTransaction | null = transactionData && await protocol.createTransaction({
+        transactions: [{
+          to: transactionData.to,
+          value: transactionData.value,
+          data: transactionData.data,
+          operation: OperationType.DelegateCall, // required for security
+        }]
+      }) || null;
+      
+  
+      await protocol.connect(
+        { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
+      )
+  
+      if (safeTransaction) {
+  
+        const safeTxHash = await protocol.getTransactionHash(safeTransaction)
+  
 
-    await protocol.connect(
-      { ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" }
-    )
+        // Sign transaction to verify that the transaction is coming from owner 1
+        // const senderSignature = await protocol.signHash(safeTxHash)
+        const ownerSig = generatePreValidatedSignature(await signer.getAddress());
 
-    if (safeTransaction) {
+        // safeTransaction.addSignature(ownerSig);
+        
+        let checksumMultiSigAddress = ethers.getAddress(multiSigAddress)
 
-      const safeTxHash = await protocol.getTransactionHash(safeTransaction)
+        console.log({
+          safeAddress: checksumMultiSigAddress,
+          safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
+          safeTxHash,
+          senderAddress: await signer.getAddress(),
+          senderSignature: ownerSig,
+          origin: SAFE_TRANSACTION_ORIGIN
+        })
+        const proposeTX = await safeApiKit.proposeTransaction({
+          safeAddress: checksumMultiSigAddress,
+          safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
+          safeTxHash,
+          senderAddress: await signer.getAddress(),
+          senderSignature: ownerSig.data,
+          origin: SAFE_TRANSACTION_ORIGIN
+        })
 
-      // Sign transaction to verify that the transaction is coming from owner 1
-      const senderSignature = await protocol.signHash(safeTxHash)
+        console.log(proposeTX)
+      }
+    } catch (error) {
 
-      await safeApiKit.proposeTransaction({
-        safeAddress: multiSigAddress,
-        safeTransactionData: transactionData?.data as unknown as SafeTransactionData, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
-        safeTxHash,
-        senderAddress: await protocol.getAddress(),
-        senderSignature: senderSignature.data,
-        origin: SAFE_TRANSACTION_ORIGIN
-      })
+      console.log(error)
+      throw error
     }
   }
 
@@ -152,10 +200,18 @@ export const MainPage = () => {
   const fetchdata = async () => {
     try {
       const data = await getPendingTransaction()
+      console.log(data)
       setTransactionQueue(data)
-      const result = await buildClaimAndSwapTx("1", import.meta.env.VITE_MULTISIG_ADDRESS, import.meta.env.VITE_SAFE_OWNER_ADDRESS);
-      console.log(result)
-      setTransactionData(result);
+      if (data.count > 0) {
+        // simulating pending transaction 
+        handleGetTransaction(data.results[0].safeTxHash)
+      }
+      else {
+        const result = await buildClaimAndSwapTx("1", import.meta.env.VITE_MULTISIG_ADDRESS, import.meta.env.VITE_SAFE_OWNER_ADDRESS);
+        setTransactionData(result);
+
+      }
+
 
     } catch (error) {
       console.error(error);
@@ -221,6 +277,7 @@ export const MainPage = () => {
   //   fetchData();
   // }, []);
 
+
   return (
     <>
       {
@@ -229,7 +286,7 @@ export const MainPage = () => {
 
             <Navbar />
             {
-              true ? (
+              false ? (
                 // (transactionQueue != null && transactionQueue?.count > 0) ? (
                 <>
                   <div className="flex flex-row gap-10 items-start justify-center px-4">
@@ -261,7 +318,7 @@ export const MainPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-center py-4">
-                    <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={transactionQueue?.count > 0 || true} />
+                    <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={ transactionQueue ? transactionQueue?.count > 0 : true  } />
                   </div>
                 </>
               )
