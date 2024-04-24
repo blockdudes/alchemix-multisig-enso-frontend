@@ -441,22 +441,5 @@ export const getPendingTransaction = async () => {
 
 
 
-async function executeTransaction(signedTx: any) {
-  // Connect to an Ethereum node
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
-  try {
-    // Send the signed transaction
-    const txResponse = await ethersProvider.send('eth_sendRawTransaction', [signedTx]);
+// export const rejectionTransaction = await protocolKit.createRejectionTransaction(safeTransaction.data.nonce)
 
-    console.log(`Transaction hash: ${txResponse.hash}`);
-
-    // Wait for the transaction to be mined
-    const receipt = await txResponse.wait();
-
-    console.log(`Transaction was mined in block: ${receipt.blockNumber}`);
-    return receipt;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-}

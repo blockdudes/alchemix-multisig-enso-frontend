@@ -20,7 +20,7 @@ const Navbar = () => {
                 </div>
                 <div className="flex justify-center items-center gap-6">
                     <Connect />
-                    <Link to="/transaction" className='text-sm font-montserrat border rounded-md p-2 bg-neutral-900 '>Transactions</Link>
+                    {/* <Link to="/transaction" className='text-sm font-montserrat border rounded-md p-2 bg-neutral-900 '>Transactions</Link> */}
                     <ModeToggle />
                 </div>
             </div>

@@ -33,6 +33,7 @@
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "^5.7.0",
+    "vaul": "^0.9.0",
     "vite-plugin-node-polyfills": "^0.21.0"
   },
   "devDependencies": {

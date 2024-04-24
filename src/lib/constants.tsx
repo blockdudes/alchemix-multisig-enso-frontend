@@ -1,0 +1,1 @@
+export const SAFE_TRANSACTION_ORIGIN = "ENSO"

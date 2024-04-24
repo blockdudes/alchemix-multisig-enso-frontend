@@ -16,40 +16,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "../ui/checkbox";
-import { useState } from 'react';
-
-const assets = [
-  {
-    id: 1,
-    tokenName: "CRV",
-    amount: 100,
-    tick: false,
-  },
-  {
-    id: 2,
-    tokenName: "CVX",
-    amount: 900,
-    tick: false,
-  },
-  {
-    id: 3,
-    tokenName: "FXS",
-    amount: 600,
-    tick: false,
-  },
-  {
-    id: 4,
-    tokenName: "3CRV",
-    amount: 500,
-    tick: false,
-  },
-];
+import { useEffect, useState } from 'react';
 
 
-const ClaimableRewardsCard = ({totalValue}: any) => {
+interface Asset {
+  address: string;
+  amount: number;
+  id: number;
+  tick: boolean;
+  tokenName: string;
+}
+
+const calculateTotalValue = (assets: Asset[]) => {
+  return assets.reduce((total: number, asset: Asset) => {
+    if (asset.tick) {
+      return total + asset.amount;
+    } else {
+      return total;
+    }
+  }, 0);
+}
+
+const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
+
+
+  useEffect(() => {
+    setItems(assets);
+    setTotalValue(calculateTotalValue(assets));
+  }, [assets]);
+
 
   const [items, setItems] = useState(assets);
-  
+  const [totalValue, setTotalValue] = useState(calculateTotalValue(assets));
+
   // const handleSelect = (id: number) => {
   //   console.log('handleSelect called');
   //   setItems(items.map(item =>
@@ -76,11 +75,11 @@ const ClaimableRewardsCard = ({totalValue}: any) => {
                 <TableRow>
                   {/* <TableHead className="w-[80px]"></TableHead> */}
                   <TableHead className="text-center">Claimable Tokens</TableHead>
-                  {/* <TableHead className="text-right">Balance($)</TableHead> */}
+                  <TableHead className="text-right">Balance($)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {assets.map((asset: any, index) => (
+                {items && items.map((asset: Asset, index: number) => (
                   <TableRow key={index} className="text-center">
                     {/* <TableCell className="font-medium">
                        <Checkbox
@@ -90,14 +89,14 @@ const ClaimableRewardsCard = ({totalValue}: any) => {
                             />
                     </TableCell> */}
                     <TableCell className="font-medium ">{asset.tokenName}</TableCell>
-                    {/* <TableCell className="text-right">{asset.amount}</TableCell> */}
+                    <TableCell className="text-right">{asset.amount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </CardContent>
-          <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom">
-            <Button className="w-full">
+          <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
+            <Button className="w-full hover:bg-white">
               Total Value:{" "}
               <span className="ml-5">{(totalValue ?? 0).toFixed(2)}</span>
             </Button>

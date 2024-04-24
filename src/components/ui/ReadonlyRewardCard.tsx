@@ -45,8 +45,8 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                             <TableHeader>
                                 <TableRow>
                                     {/* <TableHead className="w-[80px]"></TableHead> */}
-                                    <TableHead>Claimable Tokens</TableHead>
-                                    {/* <TableHead className="text-right">Balance($)</TableHead> */}
+                                    <TableHead className="text-center">Claimable Tokens</TableHead>
+                                    <TableHead className="text-center">Balance($)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -59,16 +59,16 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                                                 disabled
                                             />
                                         </TableCell> */}
-                                        <TableCell className="font-medium">{asset.tokenName}</TableCell>
-                                        {/* <TableCell className="text-right">{asset.amount}</TableCell> */}
+                                        <TableCell className="font-medium text-center">{asset.tokenName}</TableCell>
+                                        <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </CardContent>
                     <CardFooter className="flex justify-center align-bottom">
-                        <Button className="w-[150px]">
-                            Total Value: <span className="ml-5">{totalValue}</span>
+                        <Button className="w-[150px] w-full">
+                            Total Value: <span className="ml-5">{totalValue.toFixed(2)}</span>
                         </Button>
                     </CardFooter>
                 </Card>
