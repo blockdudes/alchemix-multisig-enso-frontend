@@ -5,7 +5,7 @@ import { OperationType } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit from '@safe-global/api-kit';
-import { ETH_RPC_URL, multiSigAddress, ETH_FORK_RPC_URL } from "@/lib/constants";
+import { ETH_RPC_URL, multiSigAddress, ETH_FORK_RPC_URL, SEPOLIA_RPC_URL } from "@/lib/constants";
 
 
 
@@ -58,7 +58,7 @@ interface EnsoRouteAction extends EnsoAction {
 }
 
 let safeSdk: Safe;
-const getEnsoWalletAddress = async (
+export const getEnsoWalletAddress = async (
   chainId: string,
   fromAddress: string
 ): Promise<string> => {
@@ -91,7 +91,7 @@ const claimRewardData = (): EnsoAction[] => {
   return output;
 };
 
-const usdcSwapData = (
+export const usdcSwapData = (
   assetChanges: AssetChanges,
   safeAddress: string,
   ensoWalletAddress: string
@@ -156,7 +156,7 @@ const updateAssetChanges = (
 
   return assetChanges;
 };
-const convertSimulationToAssetChanges = async (
+export const convertSimulationToAssetChanges = async (
   simulation: any
 ): Promise<Record<string, AssetChanges>> => {
   const assetChangesSimulation =
@@ -225,6 +225,7 @@ export const buildClaimAndSwapTx = async (
     chainId
   );
 
+
   let simulateEnsoClaimTxData;
   try {
     simulateEnsoClaimTxData = await simulateTx(
@@ -263,6 +264,8 @@ export const buildClaimAndSwapTx = async (
     safeAddress,
     safeOwner
   );
+
+  console.log(ensoClaimAndSwapTxData)
 
   const assetChanges = await convertSimulationToAssetChanges(
     simulateEnsoClaimAndSwapTxData
@@ -307,7 +310,8 @@ const safeTxDataFromEnsoTx = async (
   safeOwner: string
 ) => {
 
-  const ethersProvider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth");
+  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+
   safeSdk = await Safe.create({
     ethAdapter: new EthersAdapter({ ethers, signerOrProvider: ethersProvider }),
     safeAddress: safeAddress,
@@ -338,7 +342,7 @@ const safeTxDataFromEnsoTx = async (
   return safeTxData;
 };
 
-const simulateTx = async (
+export const simulateTx = async (
   chainId: string,
   txData: Record<string, string>,
   safeAddress: string,
@@ -389,6 +393,7 @@ const simulateTx = async (
 // main();
 
 
+
 const getTransactionQueue = async (safeAddress: string, chainId: number) => {
   const networkPrefix = {
     1: "eth",
@@ -401,7 +406,7 @@ const getTransactionQueue = async (safeAddress: string, chainId: number) => {
 
 export const getAllTransations = async () => {
 
-  const ethersProvider = new ethers.JsonRpcProvider(ETH_FORK_RPC_URL);
+  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
 
 
   const safeApiKit = new SafeApiKit({
@@ -418,7 +423,7 @@ export const getAllTransations = async () => {
 
 export const getPendingTransaction = async () => {
 
-  const ethersProvider = new ethers.JsonRpcProvider(ETH_FORK_RPC_URL);
+  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
   
   const safeApiKit = new SafeApiKit({
     chainId: (await ethersProvider.getNetwork()).chainId
@@ -432,7 +437,32 @@ export const getPendingTransaction = async () => {
 }
 
 
+export const reSimulateTx = async (
+  chainId: string,
+  txData: any,
+  safeAddress: string,
+  safeOwner: string
+) => {
 
+  const claimAndSwapTxData = await simulateTx(
+    chainId,
+    txData,
+    safeAddress,
+    safeOwner
+  );
+ 
+
+  const assetChanges = await convertSimulationToAssetChanges(
+    claimAndSwapTxData
+  );
+  
+
+  const multisigAssetChanges = assetChanges[multiSigAddress];
+
+  return multisigAssetChanges;
+  
+
+}
 
 // export const rejectionTransaction = await protocolKit.createRejectionTransaction(safeTransaction.data.nonce)
 

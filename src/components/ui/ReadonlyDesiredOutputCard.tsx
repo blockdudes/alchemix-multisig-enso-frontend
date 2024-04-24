@@ -60,6 +60,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
                         id={`asset-${index}`}
                         checked={item.selected}
                         disabled
+                        value={(item.balance / totalBalance * 100).toFixed(2)}
                         />
                     </TableCell>
 

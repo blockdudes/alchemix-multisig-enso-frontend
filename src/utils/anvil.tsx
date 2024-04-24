@@ -28,6 +28,10 @@ export default {
         await provider.send("anvil_setStorageAt", [safeWallet, "0x4", "0x0000000000000000000000000000000000000000000000000000000000000001"]);
 
     },
+    approveTxHash: async(multisigAddress: string, safeOwner: string, txHash: string): Promise<void> => {
+        // await provider.send("anvil_setStorageAt", [safeWallet, "", "0x0000000000000000000000000000000000000000000000000000000000000001"]);
+
+    },
     teardown: async (): Promise<void> => {
         try {
             await provider.send("evm_revert", [snapshotId]);

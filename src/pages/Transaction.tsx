@@ -41,6 +41,7 @@ import Safe, { EthersAdapter, SigningMethod } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
 import { OperationType } from "@safe-global/safe-core-sdk-types";
 import Modal from "@/components/ui/Modal";
+import { multiSigAddress } from "@/lib/constants";
 
 interface TokenData {
     token: string;
@@ -179,7 +180,8 @@ export const Transaction = () => {
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
-    const multiSigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
+    // const multiSigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
+
 
 
 
