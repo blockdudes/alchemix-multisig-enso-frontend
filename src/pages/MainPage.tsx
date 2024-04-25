@@ -46,17 +46,6 @@ interface EnsoTx {
   };
 }
 
-// const AUTHORIZED_USERS = [
-//   "0x5788f90196954a272347aee78c3b3f86f548d0a9",
-//   "0xf920f2688719012b587afbdec27ec5029c18e875",
-//   "0xb9f256128aef64459ce9558826f6466bc010b687",
-//   "0xf872703f1c8f93fa186869bac83bac5a0c87c3c8",
-//   "0xffaa3cda4f169d33291dd9ddbea8578d1398430e",
-//   "0xacd8b7e9ac7a0900cb57007000302b3234e33a36",
-//   // my address for testing
-//   "0x37a1fb984316c971fec44c1b8e49be93d382d4b3",
-// ];
-
 const getOwners = async () => {
   const owners = await getTheOwners();
   return owners
@@ -70,16 +59,18 @@ export const MainPage = () => {
   const [transactionData, setTransactionData] = useState<any>(null);
   const [transactionQueue, setTransactionQueue] = useState<any>(null);
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
   const activeAccount = useActiveAccount();
 
-  const testAddress: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+  const testAddress: String = "0x37a1fb984316c971fec44c1b8e49be93d382d4b3";
 
 
   useEffect(() => {
     getOwners().then(
       data => {
         setAuthorizedUsers([...data, testAddress.toLowerCase()]);
+        console.log(authorizedUsers);
       }).catch(
         error => 
         console.error('Error:', error));
@@ -116,7 +107,7 @@ export const MainPage = () => {
 
   const handleSwap = async () => {
 
-    
+    setIsButtonLoading(true);
 
     const data = await getPendingTransaction()
     console.log(data)
@@ -195,6 +186,8 @@ export const MainPage = () => {
 
       console.log(error)
       throw error
+    } finally {
+      setIsButtonLoading(false);
     }
   };
 
@@ -363,11 +356,12 @@ export const MainPage = () => {
           authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
             <>
             {
-              transactionData ? (
+              true ? (
+              // transactionData ? (
                 <>
                 {
                   transactionQueue != null && transactionQueue?.count > 0 ? (
-                    // false ? (
+                    // true ? (
                     <>
                     <div className="flex flex-row gap-10 items-start justify-center px-4">
                       <ReadOnlyRewardsCard
@@ -409,7 +403,8 @@ export const MainPage = () => {
                       <PremiumButton
                         onClick={() => handleSwap()}
                         label="Swap"
-                        disabled={transactionQueue?.count > 0 || true}
+                        // disabled={transactionQueue?.count > 0 || true}
+                        loading={isButtonLoading}
                       />
                     </div>
                     </>

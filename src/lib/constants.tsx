@@ -5,7 +5,9 @@ export const SAFE_TRANSACTION_ORIGIN: string  = "{}"
 const ETH_FORK_RPC_URL: string ="http://127.0.0.1:8545"
 const ETH_RPC_URL: string ="https://rpc.ankr.com/eth"
 const SEPOLIA_RPC_URL: string ="https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768"
-export const RPC_URL: string = ETH_RPC_URL
+// extra
+const ALCHEMY_RPC_URL: string = "https://eth-mainnet.g.alchemy.com/v2/jumcHoTLPE3IRB4pC9vWib2Enf2sJGXH";
+export const RPC_URL: string = ALCHEMY_RPC_URL
 
 
 
