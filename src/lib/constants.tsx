@@ -9,19 +9,19 @@ const SEPOLIA_RPC_URL: string ="https://rpc.ankr.com/eth_sepolia/c2cce5053643412
 const ALCHEMY_RPC_URL: string = "https://eth-mainnet.g.alchemy.com/v2/jumcHoTLPE3IRB4pC9vWib2Enf2sJGXH";
 export const RPC_URL: string = ALCHEMY_RPC_URL
 
+export const SAFE_API_URL : string = "http://192.168.1.4:8000/api";
 
+// export const multiSigAddress: string = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9";
+export const multiSigAddress: string = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
 
-export const multiSigAddress: string = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9";
-// export const multiSigAddress: string = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
-
-export const OWNER1_ADDRESS: string ="0x5788F90196954A272347aEe78c3b3F86F548D0a9";
-// export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+// export const OWNER1_ADDRESS: string ="0x5788F90196954A272347aEe78c3b3F86F548D0a9";
+export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
 
 
 const SEPOLIA_CHAIN_ID: string ="11155111";
 const ETHEREUM_CHAIN_ID: string ="1";
-export const CHAIN_ID: string = ETH_RPC_URL;
+export const CHAIN_ID: string = SEPOLIA_CHAIN_ID;
 
 
 export const SAFE_OWNER: string = OWNER1_ADDRESS;
