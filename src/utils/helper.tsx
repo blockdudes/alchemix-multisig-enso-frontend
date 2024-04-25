@@ -1,7 +1,7 @@
-import { ETH_FORK_RPC_URL, ETH_RPC_URL, SEPOLIA_RPC_URL } from '@/lib/constants';
+import { RPC_URL } from '@/lib/constants';
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider(ETH_RPC_URL);
+const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 const privateKey = import.meta.env.VITE_SECRET_KEY;
 

@@ -4,10 +4,9 @@ import DesiredOutputCard from "@/components/body/DesiredOutputCard";
 import Navbar from "@/components/header/Navbar";
 import PremiumButton from "@/components/ui/PremiumButton";
 import { buildClaimAndSwapTx, convertSimulationToAssetChanges, getEnsoWalletAddress, getPendingTransaction, reSimulateTx, simulateTx, usdcSwapData } from "@/utils/utils";
-import SafeApiKit from "@safe-global/api-kit";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import { OperationType, SafeMultisigTransactionResponse, SafeTransaction, SafeTransactionData } from "@safe-global/safe-core-sdk-types";
-import { ethers } from "ethers";
+import { JsonRpcSigner, ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useActiveWalletConnectionStatus } from "thirdweb/react";
 import { Transaction } from "./Transaction";
@@ -16,6 +15,8 @@ import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard
 import { CHAIN_ID, OWNER1_ADDRESS, SAFE_OWNER, SAFE_TRANSACTION_ORIGIN, multiSigAddress } from "@/lib/constants";
 import anvil from "@/utils/anvil";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
+import { useEthereum } from "@/context/store";
+import SafeApiKit from "@safe-global/api-kit";
 
 
 interface TokenData {
@@ -44,6 +45,8 @@ interface EnsoTx {
 
 
 export const MainPage = () => {
+
+  const { clientSigner,safeApiKit, ethAdapter, safe }: { clientSigner: JsonRpcSigner, safeApiKit:SafeApiKit, ethAdapter: EthersAdapter, safe: Safe } = useEthereum();
   // const [transactionData, setTransactionData] = useState<EnsoTx | null>(null);
   const [transactionData, setTransactionData] = useState<any>(null);
   const [transactionQueue, setTransactionQueue] = useState<any>(null);
@@ -54,16 +57,19 @@ export const MainPage = () => {
   const FXS_ADDRESS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
   const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
 
+
+
+
   const handleGetTransaction = async (safeTxHash: string) => {
 
-    const ethersProvider = new ethers.BrowserProvider(window.ethereum)
-    const signer = await ethersProvider.getSigner()
+    // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
+    // const signer = await ethersProvider.getSigner()
 
-    const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+    // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
 
-    const safeApiKit = new SafeApiKit({
-      chainId: 11155111n
-    });
+    // const safeApiKit = new SafeApiKit({
+    //   chainId: 11155111n
+    // });
 
    try {
     const tx: SafeMultisigTransactionResponse = await safeApiKit.getTransaction(safeTxHash)
@@ -76,28 +82,32 @@ export const MainPage = () => {
 
   const handleSwap = async () => {
 
+    
 
     const data = await getPendingTransaction()
+    console.log(data)
     if (data.count > 0) {
       throw new Error("There are pending transactions");
     }
 
     // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
     // const signer = await ethersProvider.getSigner()
-    const signer = await anvil.setup(1,OWNER1_ADDRESS)
 
-    const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
 
-    const safeApiKit = new SafeApiKit({
-      chainId: 1n
-    });
+    // const signer = await anvil.setup(1,OWNER1_ADDRESS)
 
-    // const protocol = new protocolKit();
-    const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
+    // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+
+    // const safeApiKit = new SafeApiKit({
+    //   chainId: 1n
+    // });
+
+
+    // const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
 
     try {
-      let safeTransaction: SafeTransaction | null = transactionData && await protocol.createTransaction({
+      let safeTransaction: SafeTransaction | null = transactionData && await safe.createTransaction({
         transactions: [{
           to: transactionData.to,
           value: transactionData.value,
@@ -105,38 +115,30 @@ export const MainPage = () => {
           operation: OperationType.DelegateCall, // required for security
         }]
       }) || null;
-      
-  
-      await protocol.connect(
+
+
+      await safe.connect(
         { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
       )
-  
+
       if (safeTransaction) {
-  
-        const safeTxHash = await protocol.getTransactionHash(safeTransaction)
-  
+
+        const safeTxHash = await safe.getTransactionHash(safeTransaction)
+
 
         // Sign transaction to verify that the transaction is coming from owner 1
         // const senderSignature = await protocol.signHash(safeTxHash)
-        const ownerSig = generatePreValidatedSignature(await signer.getAddress());
+        const ownerSig = generatePreValidatedSignature(await clientSigner.getAddress());
 
         // safeTransaction.addSignature(ownerSig);
-        
+
         let checksumMultiSigAddress = ethers.getAddress(multiSigAddress)
 
-        console.log({
-          safeAddress: checksumMultiSigAddress,
-          safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
-          safeTxHash,
-          senderAddress: await signer.getAddress(),
-          senderSignature: ownerSig,
-          origin: SAFE_TRANSACTION_ORIGIN
-        })
         const proposeTX = await safeApiKit.proposeTransaction({
           safeAddress: checksumMultiSigAddress,
           safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
           safeTxHash,
-          senderAddress: await signer.getAddress(),
+          senderAddress: await clientSigner.getAddress(),
           senderSignature: ownerSig.data,
           origin: SAFE_TRANSACTION_ORIGIN
         })
@@ -178,63 +180,69 @@ export const MainPage = () => {
 
 
     const dummyData: TokenData[] = [
-      { token: 'usdc', balance: claimAndSwapTotal, selected: true },
+      { token: 'usdc', 
+      balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0), 
+      selected: true },
     ];
 
-    return dummyData
-
-    // return transactionData.map((item: TokenData, index: number) => {
-    //     return {
-    //       token: item.token,
-    //       balance: item.balance,
-    //       selected: item.selected,
-    //     }
-    // })
+    return dummyData;
 
   }
 
 
   const fetchdata = async () => {
-    
+
     try {
       const data = await getPendingTransaction()
-      setTransactionQueue(data)
-      if (data.count > 0) {
+      const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
+      const filteredData = { ...data, results: filteredTransaction };
+
+      setTransactionQueue(filteredData)
+
+      if (filteredData.count > 0) {
         // simulating pending transaction 
-        const txToSimulate = await handleGetTransaction(data.results[0].safeTxHash);
-        
+
+        const txToSimulate = await handleGetTransaction(filteredData.results[0].safeTxHash);
+
 
         const txData = {
-          chainId : CHAIN_ID,
-          data: txToSimulate.data || "",
+          chainId: CHAIN_ID,
+          data: txToSimulate?.data ,
           from: multiSigAddress,
-          to: txToSimulate.to,
-          value: txToSimulate.value
+          to: txToSimulate?.to ,
+          value: txToSimulate?.value
         };
 
 
-        const multisigAssetChanges = await reSimulateTx(
+        let multisigAssetChanges = await reSimulateTx(
           CHAIN_ID,
           txData,
           multiSigAddress,
-          SAFE_OWNER 
+          SAFE_OWNER
         );
 
-        
+
         const outputTx = {
-          data: txToSimulate.data,
-          to: txToSimulate.to,
-          value: txToSimulate.value,
+          data: txToSimulate?.data,
+          to: txToSimulate?.to,
+          value: txToSimulate?.value,
           assetChanges: {
             claim: multisigAssetChanges,
-          }}
+          }
+        }
 
-          setTransactionData(outputTx);
+        setTransactionData(outputTx);
 
       }
       else {
-        const result = await buildClaimAndSwapTx("1", import.meta.env.VITE_MULTISIG_ADDRESS, import.meta.env.VITE_SAFE_OWNER_ADDRESS);
-        setTransactionData(result);
+        try {
+          const result = await buildClaimAndSwapTx(CHAIN_ID, multiSigAddress, SAFE_OWNER);
+          console.log(result)
+          setTransactionData(result);
+          
+        } catch (error) {
+          console.log(error)
+        }
 
       }
 
@@ -250,7 +258,7 @@ export const MainPage = () => {
   }, []);
 
 
-  const sumClaimAndSwapAmount = transactionData ? Object.values(transactionData.assetChanges.claimAndSwap).reduce((sum, current: any) => sum + current.amount , 0) : 0;
+  const sumClaimAndSwapAmount = transactionData ? Object.values(transactionData.assetChanges.claimAndSwap).reduce((sum, current: any) => sum + current.amount, 0) : 0;
 
 
   // const [metaData, setMetaData] = useState<{ [key: string]: MetadataItem[] }>({
@@ -311,14 +319,14 @@ export const MainPage = () => {
 
             <Navbar />
             {
-              false ? (
+              true ? (
                 // (transactionQueue != null && transactionQueue?.count > 0) ? (
                 <>
                   <div className="flex flex-row gap-10 items-start justify-center px-4">
                     <ReadOnlyRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
                     <ReadonlyDesiredOutputCard tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)} />
                   </div>
-                  <div className="border p-10 rounded">
+                  <div className="">
                     <Transaction />
                   </div>
                 </>
@@ -343,7 +351,8 @@ export const MainPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-center py-4">
-                    <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={ transactionQueue ? transactionQueue?.count > 0 : true  } />
+                  <PremiumButton onClick={() => handleSwap()} label="Swap" />
+                  {/* <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={ transactionQueue ? transactionQueue?.count > 0 : true  } /> */}
                   </div>
                 </>
               )

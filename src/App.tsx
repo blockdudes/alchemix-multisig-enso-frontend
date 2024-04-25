@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Transaction } from "./pages/Transaction";
 import { MainPage } from "./pages/MainPage";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
+import GlobalStateProvider from "./context/store";
 
 interface BaseMetadata {
   key: string;
@@ -71,8 +72,12 @@ const App = () => {
     <>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RedirectToDashboard />} />
-          <Route path="/dashboard" element={<MainPage />} />
+          <Route path="/" element={<MainPage />} />
+          {/* <Route path="/dashboard" element={
+            <GlobalStateProvider>
+              <MainPage />
+            </GlobalStateProvider>
+          } /> */}
           <Route path="/transaction" element={
               <Transaction />
             // <ProtectedRoute>

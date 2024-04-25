@@ -5,7 +5,7 @@ import { OperationType } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit from '@safe-global/api-kit';
-import { ETH_RPC_URL, multiSigAddress, ETH_FORK_RPC_URL, SEPOLIA_RPC_URL } from "@/lib/constants";
+import {  multiSigAddress, RPC_URL } from "@/lib/constants";
 
 
 
@@ -62,33 +62,43 @@ export const getEnsoWalletAddress = async (
   chainId: string,
   fromAddress: string
 ): Promise<string> => {
-  const {
-    data: { address: walletAddress },
-  } = await axios.get(
-    `${ensoApi}wallet?chainId=${chainId}&fromAddress=${fromAddress}`,
-    {
-      headers: {
-        Authorization: `Bearer ${ensoApiKey}`,
-      },
-    }
-  );
-  return walletAddress;
+  try {
+    const {
+      data: { address: walletAddress },
+    } = await axios.get(
+      `${ensoApi}wallet?chainId=${chainId}&fromAddress=${fromAddress}`,
+      {
+        headers: {
+          Authorization: `Bearer ${ensoApiKey}`,
+        },
+      }
+    );
+    return walletAddress;
+  } catch (error) {
+    throw new Error("Error getting enso wallet address")
+  }
+ 
 };
 
 const claimRewardData = (): EnsoAction[] => {
-  const output: EnsoAction[] = [
-    {
-      protocol: "enso",
-      action: "call",
-      args: {
-        address: threePoolManagerAddress,
-        method: "claimRewards",
-        abi: "function claimRewards() external",
-        args: [], // Fix: Allow an empty array for args
-      },
-    }, // todo: add more manager addresses
-  ];
-  return output;
+  try {
+    const output: EnsoAction[] = [
+      {
+        protocol: "enso",
+        action: "call",
+        args: {
+          address: threePoolManagerAddress,
+          method: "claimRewards",
+          abi: "function claimRewards() external",
+          args: [], // Fix: Allow an empty array for args
+        },
+      }, // todo: add more manager addresses
+    ];
+    return output;
+  } catch (error) {
+    throw new Error("Error creating claim reward data")
+  }
+ 
 };
 
 export const usdcSwapData = (
@@ -96,24 +106,29 @@ export const usdcSwapData = (
   safeAddress: string,
   ensoWalletAddress: string
 ): EnsoAction[] => {
-  const usdcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-  const output: EnsoAction[] = [];
-  for (const [token, changes] of Object.entries(assetChanges)) {
-    const amount = (changes.rawAmount / BigInt(1000)).toString(); // todo: change this divide only used because enso route function is failing
-    // use token address and amount to create the ensorouteaction
-    const approveToken = approveTokenData(token, ensoWalletAddress, amount);
-    output.push(approveToken);
-    output.push({
-      protocol: "enso",
-      action: "route",
-      args: {
-        tokenIn: token,
-        tokenOut: usdcAddress,
-        amountIn: amount,
-      },
-    });
+  try {
+    const usdcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    const output: EnsoAction[] = [];
+    for (const [token, changes] of Object.entries(assetChanges)) {
+      const amount = (changes.rawAmount / BigInt(1000)).toString(); // todo: change this divide only used because enso route function is failing
+      // use token address and amount to create the ensorouteaction
+      const approveToken = approveTokenData(token, ensoWalletAddress, amount);
+      output.push(approveToken);
+      output.push({
+        protocol: "enso",
+        action: "route",
+        args: {
+          tokenIn: token,
+          tokenOut: usdcAddress,
+          amountIn: amount,
+        },
+      });
+    }
+    return output
+  } catch (error) {
+    throw new Error("Error creating usdc swap data")
   }
-  return output;
+ ;
 };
 
 const ensoBuildTx = async (
@@ -121,18 +136,23 @@ const ensoBuildTx = async (
   fromAddress: string,
   chainId: string
 ) => {
-  const response = await axios.post(
-    `${ensoApi}shortcuts/bundle?chainId=${chainId}&fromAddress=${fromAddress}`,
-    actions,
-    {
-      headers: {
-        Authorization: `Bearer ${ensoApiKey}`,
-      },
-    }
-  );
-  const txData = response.data;
-
-  return txData;
+  try {
+    const response = await axios.post(
+      `${ensoApi}shortcuts/bundle?chainId=${chainId}&fromAddress=${fromAddress}`,
+      actions,
+      {
+        headers: {
+          Authorization: `Bearer ${ensoApiKey}`,
+        },
+      }
+    );
+    const txData = response.data;
+  
+    return txData;
+  } catch (error) {
+    throw new Error("Error building transaction")
+  }
+  
 };
 
 const updateAssetChanges = (
@@ -142,24 +162,30 @@ const updateAssetChanges = (
   amount: number,
   rawAmount: bigint
 ): Record<string, AssetChanges> => {
-  if (!assetChanges[userAddress]) {
-    assetChanges[userAddress] = {};
-  }
-  if (!assetChanges[userAddress][tokenAddr]) {
-    assetChanges[userAddress][tokenAddr] = {
-      amount: 0,
-      rawAmount: BigInt(0),
-    };
-  }
-  assetChanges[userAddress][tokenAddr].amount += amount;
-  assetChanges[userAddress][tokenAddr].rawAmount += rawAmount;
-
-  return assetChanges;
+  try {
+    if (!assetChanges[userAddress]) {
+      assetChanges[userAddress] = {};
+    }
+    if (!assetChanges[userAddress][tokenAddr]) {
+      assetChanges[userAddress][tokenAddr] = {
+        amount: 0,
+        rawAmount: BigInt(0),
+      };
+    }
+    assetChanges[userAddress][tokenAddr].amount += amount;
+    assetChanges[userAddress][tokenAddr].rawAmount += rawAmount;
+  
+    return assetChanges;
+  } catch (error) {
+      throw new Error("Error updating asset changes")
+  } 
+ 
 };
 export const convertSimulationToAssetChanges = async (
   simulation: any
 ): Promise<Record<string, AssetChanges>> => {
-  const assetChangesSimulation =
+  try {
+    const assetChangesSimulation =
     simulation.transaction.transaction_info.asset_changes;
   let assetChanges: Record<string, AssetChanges> = {};
 
@@ -196,6 +222,10 @@ export const convertSimulationToAssetChanges = async (
     }
   }
   return assetChanges;
+  } catch (error) {
+    throw new Error("Error converting simulation to asset changes")
+  }
+  
 };
 
 interface EnsoTx {
@@ -215,7 +245,9 @@ export const buildClaimAndSwapTx = async (
   safeOwner: string
 ): Promise<EnsoTx> => {
 
-  const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
+  try {
+    
+    const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
 
   const claimRewardEnsoData = claimRewardData();
 
@@ -284,6 +316,10 @@ export const buildClaimAndSwapTx = async (
   };
 
   return outputTx;
+  } catch (error) {
+    throw new Error("Error building claim and swap transaction")
+  }
+  
 };
 
 
@@ -292,16 +328,20 @@ const approveTokenData = (
   receiverAddress: string,
   amount: string
 ) => {
-  const output = {
-    protocol: "enso",
-    action: "approve",
-    args: {
-      token: tokenAddress,
-      spender: receiverAddress,
-      amount: amount,
-    },
-  };
-  return output;
+  try {
+    const output = {
+      protocol: "enso",
+      action: "approve",
+      args: {
+        token: tokenAddress,
+        spender: receiverAddress,
+        amount: amount,
+      },
+    };
+    return output;
+  } catch (error) {
+    throw new Error("Error creating approve token data");
+  }
 };
 
 const safeTxDataFromEnsoTx = async (
@@ -310,36 +350,42 @@ const safeTxDataFromEnsoTx = async (
   safeOwner: string
 ) => {
 
-  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+  try {
+    const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
 
-  safeSdk = await Safe.create({
-    ethAdapter: new EthersAdapter({ ethers, signerOrProvider: ethersProvider }),
-    safeAddress: safeAddress,
-  });
+    safeSdk = await Safe.create({
+      ethAdapter: new EthersAdapter({ ethers, signerOrProvider: ethersProvider }),
+      safeAddress: safeAddress,
+    });
+  
+    const safeTransaction = await safeSdk.createTransaction({
+      transactions: [
+        {
+          to: txData.to,
+          value: txData.value,
+          data: txData.data,
+          operation: OperationType.DelegateCall, // required for security
+        },
+      ],
+    });
+    const ownerSig = generatePreValidatedSignature(safeOwner);
+  
+    safeTransaction.addSignature(ownerSig);
+  
+    const safeTxInput = await safeSdk.getEncodedTransaction(safeTransaction);
+    const safeTxData: SafeTxData = {
+      to: safeAddress,
+      value: safeTransaction.data.value,
+      input: safeTxInput,
+      from: safeOwner,
+    };
+  
+    return safeTxData;
+  } catch (error) {
+    throw new Error("Error creating safe transaction");
+  }
 
-  const safeTransaction = await safeSdk.createTransaction({
-    transactions: [
-      {
-        to: txData.to,
-        value: txData.value,
-        data: txData.data,
-        operation: OperationType.DelegateCall, // required for security
-      },
-    ],
-  });
-  const ownerSig = generatePreValidatedSignature(safeOwner);
-
-  safeTransaction.addSignature(ownerSig);
-
-  const safeTxInput = await safeSdk.getEncodedTransaction(safeTransaction);
-  const safeTxData: SafeTxData = {
-    to: safeAddress,
-    value: safeTransaction.data.value,
-    input: safeTxInput,
-    from: safeOwner,
-  };
-
-  return safeTxData;
+ 
 };
 
 export const simulateTx = async (
@@ -348,31 +394,38 @@ export const simulateTx = async (
   safeAddress: string,
   safeOwner: string
 ): Promise<object> => {
-  const safeTxData = await safeTxDataFromEnsoTx(txData, safeAddress, safeOwner);
-  const response = await axios.post(
-    `${tenderlyProjectApi}/simulate`,
-
-    {
-      network_id: chainId,
-      ...safeTxData,
-      state_objects: {
-        [safeAddress]: {
-          storage: {
-            "0x0000000000000000000000000000000000000000000000000000000000000004":
-              "0x0000000000000000000000000000000000000000000000000000000000000001",
+  try {
+    
+    const safeTxData = await safeTxDataFromEnsoTx(txData, safeAddress, safeOwner);
+    const response = await axios.post(
+      `${tenderlyProjectApi}/simulate`,
+  
+      {
+        network_id: chainId,
+        ...safeTxData,
+        state_objects: {
+          [safeAddress]: {
+            storage: {
+              "0x0000000000000000000000000000000000000000000000000000000000000004":
+                "0x0000000000000000000000000000000000000000000000000000000000000001",
+            },
           },
         },
       },
-    },
-    {
-      headers: {
-        "X-Access-Key": tenderlyApiKey,
-      },
-    }
-  );
+      {
+        headers: {
+          "X-Access-Key": tenderlyApiKey,
+        },
+      }
+    );
+  
+    // todo: handle error
+    return response.data;
 
-  // todo: handle error
-  return response.data;
+  } catch (error) {
+    throw new Error("Error simulating transaction");
+  }
+
 };
 
 // const setup = async (safeAddress: string) => {
@@ -395,44 +448,60 @@ export const simulateTx = async (
 
 
 const getTransactionQueue = async (safeAddress: string, chainId: number) => {
-  const networkPrefix = {
-    1: "eth",
-    5: "goerli",
-  }[chainId];
-  const url = `https://app.safe.global/transactions/queue?safe=${networkPrefix}:${safeAddress}`;
-  const response = await axios.get(url);
-  return response.data;
+  try {
+    const networkPrefix = {
+      1: "eth",
+      5: "goerli",
+    }[chainId];
+    const url = `https://app.safe.global/transactions/queue?safe=${networkPrefix}:${safeAddress}`;
+    const response = await axios.get(url);
+    return response.data;
+    
+  } catch (error) {
+    throw new Error("Error fetching transaction queue");
+  }
 };
 
 export const getAllTransations = async () => {
 
-  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+  try {
+    
+    const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
+  
+  
+    const safeApiKit = new SafeApiKit({
+      chainId: (await ethersProvider.getNetwork()).chainId
+    });
+  
+    const checksum_multisig = ethers.getAddress(multiSigAddress)
+    const transactions = await safeApiKit.getAllTransactions(checksum_multisig);
+  
+    return transactions;
 
+  } catch (error) {
+    throw new Error("Error fetching all transactions")
+  }
 
-  const safeApiKit = new SafeApiKit({
-    chainId: (await ethersProvider.getNetwork()).chainId
-  });
-
-  const checksum_multisig = ethers.getAddress(multiSigAddress)
-  const transactions = await safeApiKit.getAllTransactions(checksum_multisig);
-
-  return transactions;
 
 }
 
 
 export const getPendingTransaction = async () => {
-
-  const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+  try {
+    
+    const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
+    
+    const safeApiKit = new SafeApiKit({
+      chainId: (await ethersProvider.getNetwork()).chainId
+    });
   
-  const safeApiKit = new SafeApiKit({
-    chainId: (await ethersProvider.getNetwork()).chainId
-  });
-
-  const checksum_multisig = ethers.getAddress(multiSigAddress)
-  const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
-
-  return transactions;
+    const checksum_multisig = ethers.getAddress(multiSigAddress)
+    const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
+  
+    return transactions;
+  } catch (error) {
+    throw new Error("Error fetching pending transactions")
+  }
 
 }
 
@@ -444,23 +513,30 @@ export const reSimulateTx = async (
   safeOwner: string
 ) => {
 
-  const claimAndSwapTxData = await simulateTx(
-    chainId,
-    txData,
-    safeAddress,
-    safeOwner
-  );
- 
-
-  const assetChanges = await convertSimulationToAssetChanges(
-    claimAndSwapTxData
-  );
+  try {
+    const claimAndSwapTxData = await simulateTx(
+      chainId,
+      txData,
+      safeAddress,
+      safeOwner
+    );
+   
+    console.log(claimAndSwapTxData)
   
-
-  const multisigAssetChanges = assetChanges[multiSigAddress];
-
-  return multisigAssetChanges;
+    const assetChanges = await convertSimulationToAssetChanges(
+      claimAndSwapTxData
+    );
+    
   
+    const multisigAssetChanges = assetChanges[multiSigAddress];
+  
+    return multisigAssetChanges;
+    
+    
+  } catch (error) {
+    throw new Error("Error re-simulating transaction");
+  }
+
 
 }
 

@@ -26,9 +26,10 @@ interface TokenData {
 
 const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData }) => {
 
-  console.log(tokenData)
-
+  
   const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.balance, 0)
+
+
   return (
     <>
       <div className="claimableRewards m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
@@ -65,7 +66,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
                     </TableCell>
 
                       <TableCell className="text-start">{item.token}</TableCell>
-                    <TableCell className="font-medium ">{(item.balance / totalBalance * 100).toFixed(2)}%</TableCell>
+                    <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

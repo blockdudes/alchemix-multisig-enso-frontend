@@ -16,16 +16,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-
-
 import { Checkbox } from "@/components/ui/checkbox"
 import { useEffect, useState } from "react";
 import PremiumButton from "@/components/ui/PremiumButton";
@@ -38,10 +28,11 @@ import { Navigate } from "react-router-dom";
 import { SafeMessageConfirmation } from "@safe-global/api-kit";
 import { signTransaction } from "@/utils/helper";
 import Safe, { EthersAdapter, SigningMethod } from "@safe-global/protocol-kit";
-import { ethers } from "ethers";
+import { JsonRpcSigner, ethers } from "ethers";
 import { OperationType } from "@safe-global/safe-core-sdk-types";
 import Modal from "@/components/ui/Modal";
-import { multiSigAddress } from "@/lib/constants";
+import { SAFE_TRANSACTION_ORIGIN, multiSigAddress } from "@/lib/constants";
+import { useEthereum } from "@/context/store";
 
 interface TokenData {
     token: string;
@@ -74,7 +65,7 @@ export const convertToSlice = (address: string) => {
 
 
 const TransactionTable = ({ transactions, isPending }: any) => {
-    console.log(transactions)
+
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const openModal = () => setIsModalOpen(true);
@@ -138,31 +129,31 @@ const TransactionTable = ({ transactions, isPending }: any) => {
                             </AccordionItem>
                         </Accordion>
                     </TableCell>
-                    
-                  <TableCell className="text-center" >
-                    <Modal isOpen={isModalOpen} onClose={closeModal}>
-                      <h2 className="text-black">Details - {transaction.id}</h2>
-                      <div className="overflow-y-auto max-h-[90%]">
-                        <div className="flex flex-col pointer-events-none select-none">
-                          <div className="flex flex-row gap-10 items-start justify-center px-4">
-                            <ReadOnlyRewardsCard assets={dummyAssets} />
-                            <ReadonlyDesiredOutputCard tokenData={dummyData} />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="sticky bottom-0 bg-black p-2">
-                        <div className="flex justify-center items-center gap-10 py-2">
-                          <PremiumButton onClick={() => console.log("clicked")} label="Sign" />
-                          <Button onClick={closeModal}>Reject</Button>
-                        </div>
-                      </div>
-                    </Modal>
 
-                    <button onClick={openModal} className="border border-gray-700 p-2 hover:bg-neutral-900 hover:bg-opacity-50 rounded-md ">
-                      View
-                    </button>
+                    <TableCell className="text-center" >
+                        <Modal isOpen={isModalOpen} onClose={closeModal}>
+                            <h2 className="text-black">Details - {transaction.id}</h2>
+                            <div className="overflow-y-auto max-h-[90%]">
+                                <div className="flex flex-col pointer-events-none select-none">
+                                    <div className="flex flex-row gap-10 items-start justify-center px-4">
+                                        <ReadOnlyRewardsCard assets={dummyAssets} />
+                                        <ReadonlyDesiredOutputCard tokenData={dummyData} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="sticky bottom-0 bg-black p-2">
+                                <div className="flex justify-center items-center gap-10 py-2">
+                                    <PremiumButton onClick={() => console.log("clicked")} label="Sign" />
+                                    <Button onClick={closeModal}>Reject</Button>
+                                </div>
+                            </div>
+                        </Modal>
 
-                  </TableCell>
+                        <button onClick={openModal} className="border border-gray-700 p-2 hover:bg-neutral-900 hover:bg-opacity-50 rounded-md ">
+                            View
+                        </button>
+
+                    </TableCell>
                 </TableRow>
             ))}
         </>
@@ -171,6 +162,9 @@ const TransactionTable = ({ transactions, isPending }: any) => {
 };
 
 export const Transaction = () => {
+
+    const { clientSigner, safe, ethAdapter }: { clientSigner: JsonRpcSigner, safe: Safe, ethAdapter: EthersAdapter } = useEthereum();
+
 
     const walletStatus = useActiveWalletConnectionStatus();
     const [completedTransaction, setCompletedTransaction] = useState<any>([]);
@@ -188,7 +182,7 @@ export const Transaction = () => {
     const fetchdata = async () => {
         try {
             const result = await buildClaimAndSwapTx("1", multiSigAddress, "0x5788F90196954A272347aEe78c3b3F86F548D0a9");
-            console.log("take",result)
+            console.log("take", result)
             return result
         } catch (error) {
             console.error(error);
@@ -199,7 +193,8 @@ export const Transaction = () => {
     const getTx = async () => {
         try {
             const queuedtransaction = await getPendingTransaction();
-            const queuedMultisigTransaction = queuedtransaction.results.filter(item => item.isExecuted === false);
+            console.log(queuedtransaction)
+            const queuedMultisigTransaction = queuedtransaction.results.filter(item => item.isExecuted === false && item.origin === SAFE_TRANSACTION_ORIGIN);
             console.log(queuedMultisigTransaction)
             setQueuedTransactions(queuedMultisigTransaction)
 
@@ -218,20 +213,19 @@ export const Transaction = () => {
     }, []);
 
 
-
     const handleSignTx = async () => {
-        const ethersProvider = new ethers.BrowserProvider(window.ethereum)
-        const signer = await ethersProvider.getSigner()
+        // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
+        // const signer = await ethersProvider.getSigner()
 
-        const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+        // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
 
         // const protocol = new protocolKit();
-        const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
+        // const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
         try {
 
 
-            let transactionSafe1_1 = await protocol.createTransaction({
+            let transactionSafe1_1 = await safe.createTransaction({
                 transactions: [{
                     to: rawTransactionData.to,
                     value: rawTransactionData.value,
@@ -241,18 +235,17 @@ export const Transaction = () => {
             })
 
 
-
-            await protocol.connect(
+            await safe.connect(
                 { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
             )
 
 
-            await protocol.signTransaction(transactionSafe1_1, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
+            await safe.signTransaction(transactionSafe1_1, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
 
             const newPendingTransaction: any = await getPendingTransaction();
 
             if (newPendingTransaction.confirmationsRequired === newPendingTransaction.confirmations.length) {
-                protocol.executeTransaction(transactionSafe1_1)
+                safe.executeTransaction(transactionSafe1_1)
             }
 
         } catch (error) {
@@ -266,70 +259,71 @@ export const Transaction = () => {
     const handleRejectTx = async () => {
 
         let nonce = queuedTransactions[0].nonce;
-        const ethersProvider = new ethers.BrowserProvider(window.ethereum)
-        const signer = await ethersProvider.getSigner()
+        // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
+        // const signer = await ethersProvider.getSigner()
 
-        const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+        // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
+        // const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
-        // const protocol = new protocolKit();
+
         try {
-            const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
-            const reject_transasction = await protocol.createRejectionTransaction(nonce)
+            const reject_transasction = await safe.createRejectionTransaction(nonce)
 
-            await protocol.connect(
+            await safe.connect(
                 { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
             )
 
-
-            await protocol.signTransaction(reject_transasction, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
+            await safe.signTransaction(reject_transasction, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
 
             const newPendingTransaction: any = await getPendingTransaction();
 
             if (newPendingTransaction.confirmationsRequired === newPendingTransaction.confirmations.length) {
-                protocol.executeTransaction(reject_transasction)
+                safe.executeTransaction(reject_transasction)
             }
 
         } catch (error) {
             console.log(error)
             throw error;
         }
-
-
     }
 
 
     return (
-        <>
-            <Tabs defaultValue="pending" className="w-full flex flex-col justify-center items-center">
-                <TabsList>
-                    <TabsTrigger value="pending">Pending</TabsTrigger>
-                    {/* <TabsTrigger value="completed">Completed</TabsTrigger> */}
-                </TabsList>
-                <TabsContent value="pending" className="w-[90%] mt-14">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[200px]">safeTxHash</TableHead>
-                                <TableHead>Proposed by</TableHead>
-                                <TableHead className="w-[400px] text-center">Signed by</TableHead>
-                                <TableHead className="text-right">Details</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody className="w-full ">
-                                <TransactionTable transactions={queuedTransactions} isPending={true} />
+        <div className="w-full p-4 flex justify-center items-center gap-5">
+            <PremiumButton onClick={() => handleSignTx()} label="Sign" />
+            <Button onClick={() => handleRejectTx()}>Reject</Button>
+        </div>
 
-                        </TableBody>
-                    </Table>
-
-                </TabsContent>
-                {/* <TabsContent value="completed" className="w-[90%] mt-14">
-          <TransactionTable transactions={queuedTransactions} isPending={false} />
-        </TabsContent> */}
-            </Tabs>
-        </>
     );
 
-    
+
 }
 
+
+{/* <Tabs defaultValue="pending" className="w-full flex flex-col justify-center items-center">
+    <TabsList>
+        <TabsTrigger value="pending">Pending</TabsTrigger>
+        <TabsTrigger value="completed">Completed</TabsTrigger>
+    </TabsList>
+    <TabsContent value="pending" className="w-[90%] mt-14">
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead className="w-[200px]">safeTxHash</TableHead>
+                    <TableHead>Proposed by</TableHead>
+                    <TableHead className="w-[400px] text-center">Signed by</TableHead>
+                    <TableHead className="text-right">Details</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody className="w-full ">
+                <TransactionTable transactions={queuedTransactions} isPending={true} />
+
+            </TableBody>
+        </Table>
+
+    </TabsContent>
+    <TabsContent value="completed" className="w-[90%] mt-14">
+        <TransactionTable transactions={queuedTransactions} isPending={false} />
+    </TabsContent>
+</Tabs> */}
