@@ -17,6 +17,10 @@ import anvil from "@/utils/anvil";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { useEthereum } from "@/context/store";
 import SafeApiKit from "@safe-global/api-kit";
+import Loader from "@/components/ui/Loader";
+import { useActiveAccount } from "thirdweb/react";
+import ErrorPage from "./ErrorPage";
+import { getTheOwners } from "@/utils/helper";
 
 
 interface TokenData {
@@ -42,6 +46,21 @@ interface EnsoTx {
   };
 }
 
+// const AUTHORIZED_USERS = [
+//   "0x5788f90196954a272347aee78c3b3f86f548d0a9",
+//   "0xf920f2688719012b587afbdec27ec5029c18e875",
+//   "0xb9f256128aef64459ce9558826f6466bc010b687",
+//   "0xf872703f1c8f93fa186869bac83bac5a0c87c3c8",
+//   "0xffaa3cda4f169d33291dd9ddbea8578d1398430e",
+//   "0xacd8b7e9ac7a0900cb57007000302b3234e33a36",
+//   // my address for testing
+//   "0x37a1fb984316c971fec44c1b8e49be93d382d4b3",
+// ];
+
+const getOwners = async () => {
+  const owners = await getTheOwners();
+  return owners
+}
 
 
 export const MainPage = () => {
@@ -50,11 +69,26 @@ export const MainPage = () => {
   // const [transactionData, setTransactionData] = useState<EnsoTx | null>(null);
   const [transactionData, setTransactionData] = useState<any>(null);
   const [transactionQueue, setTransactionQueue] = useState<any>(null);
+  const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
+  const walletConnectionStatus = useActiveWalletConnectionStatus();
+  const activeAccount = useActiveAccount();
 
+  const testAddress: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+
+
+  useEffect(() => {
+    getOwners().then(
+      data => {
+        setAuthorizedUsers([...data, testAddress.toLowerCase()]);
+      }).catch(
+        error => 
+        console.error('Error:', error));
+  }, []);
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
   const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
   const FXS_ADDRESS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
+  
   const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
 
 
@@ -93,6 +127,18 @@ export const MainPage = () => {
     // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
     // const signer = await ethersProvider.getSigner()
 
+    let safeTransaction: SafeTransaction | null =
+      (transactionData &&
+        (await safe.createTransaction({
+          transactions: [
+            {
+              to: transactionData.to,
+              value: transactionData.value,
+              data: transactionData.data,
+              operation: OperationType.DelegateCall, // required for security
+            },
+          ],
+        }))) || null;
 
     // const signer = await anvil.setup(1,OWNER1_ADDRESS)
 
@@ -150,10 +196,9 @@ export const MainPage = () => {
       console.log(error)
       throw error
     }
-  }
+  };
 
   const transformTransactionDataClaimAsset = (transactionData: any) => {
-
     const assets = [
       { id: 1, tokenName: "CRV", address: CRV_ADDRESS },
       { id: 2, tokenName: "CVX", address: CVX_ADDRESS },
@@ -162,7 +207,8 @@ export const MainPage = () => {
     ];
 
     return assets.map((asset) => {
-      const assetData = transactionData && transactionData?.assetChanges.claim[asset.address];
+      const assetData =
+        transactionData && transactionData?.assetChanges.claim[asset.address];
       return {
         ...asset,
         amount: assetData ? assetData.amount : 0,
@@ -171,11 +217,8 @@ export const MainPage = () => {
     });
   };
 
-
   const transformTransactionDataClaimAndSwapAsset = (transactionData: any) => {
-
     const claimAndSwapAssets = transactionData && transactionData?.assetChanges.claimAndSwap;
-
     const claimAndSwapTotal = claimAndSwapAssets && Object.values(claimAndSwapAssets).reduce((total: number, asset: any) => total + (asset.amount) as number, 0);
 
 
@@ -249,12 +292,11 @@ export const MainPage = () => {
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   // console.log(transactionData)
   useEffect(() => {
-    fetchdata()
-
+    fetchdata();
   }, []);
 
 
@@ -313,56 +355,85 @@ export const MainPage = () => {
 
   return (
     <>
-      {
-        useActiveWalletConnectionStatus() === "connected" ? (
-          <>
-
-            <Navbar />
+    {
+      walletConnectionStatus === "connected" ? (
+        <>
+        <Navbar />
+        {
+          authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+            <>
             {
-              true ? (
-                // (transactionQueue != null && transactionQueue?.count > 0) ? (
+              transactionData ? (
                 <>
-                  <div className="flex flex-row gap-10 items-start justify-center px-4">
-                    <ReadOnlyRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
-                    <ReadonlyDesiredOutputCard tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)} />
-                  </div>
-                  <div className="">
-                    <Transaction />
-                  </div>
+                {
+                  transactionQueue != null && transactionQueue?.count > 0 ? (
+                    // false ? (
+                    <>
+                    <div className="flex flex-row gap-10 items-start justify-center px-4">
+                      <ReadOnlyRewardsCard
+                        assets={transformTransactionDataClaimAsset(transactionData)}
+                      />
+                      <ReadonlyDesiredOutputCard
+                        tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                      />
+                    </div>
+                    <div className="border p-10 rounded">
+                      <Transaction />
+                    </div>
+                    </>
+                  ) : (
+                    <>
+                    <div className="flex flex-col ">
+                      {/* <div className="flex flex-row gap-10 items-center justify-center ">
+                      {Object.entries(metaData).map(([groupName, items], index) => (
+                        <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
+                          {items.map((item, itemIndex) => (
+                            <MetadataCard
+                              key={itemIndex}
+                              text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div> */}
+                      <div className="flex flex-row gap-10 items-start justify-center px-4">
+                        <ClaimableRewardsCard
+                          assets={transformTransactionDataClaimAsset(transactionData)}
+                        />
+                        <DesiredOutputCard
+                          totalBalance={sumClaimAndSwapAmount as number}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-center py-4">
+                      <PremiumButton
+                        onClick={() => handleSwap()}
+                        label="Swap"
+                        disabled={transactionQueue?.count > 0 || true}
+                      />
+                    </div>
+                    </>
+                  )
+                }
                 </>
               ) : (
                 <>
-                  <div className="flex flex-col ">
-                    {/* <div className="flex flex-row gap-10 items-center justify-center ">
-                  {Object.entries(metaData).map(([groupName, items], index) => (
-                    <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-                      {items.map((item, itemIndex) => (
-                        <MetadataCard
-                          key={itemIndex}
-                          text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div> */}
-                    <div className="flex flex-row gap-10 items-start justify-center px-4">
-                      <ClaimableRewardsCard assets={transformTransactionDataClaimAsset(transactionData)} />
-                      <DesiredOutputCard totalBalance={sumClaimAndSwapAmount as number} />
-                    </div>
-                  </div>
-                  <div className="flex justify-center py-4">
-                  <PremiumButton onClick={() => handleSwap()} label="Swap" />
-                  {/* <PremiumButton onClick={() => handleSwap()} label="Swap" disabled={ transactionQueue ? transactionQueue?.count > 0 : true  } /> */}
-                  </div>
+                <div>
+                  <Loader />
+                </div>
                 </>
               )
             }
-
-          </>
-        ) : (
-          <AuthenticationPage />
-        )
-      }
+            </>
+          ) : (
+              <ErrorPage />
+          )
+        }
+        </>
+      ) : (
+        <AuthenticationPage />
+      )
+    }
     </>
-  )
+  );
 }

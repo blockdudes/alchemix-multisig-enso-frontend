@@ -35,7 +35,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
       <div className="claimableRewards m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
         <Card className="w-[400px] h-[480px] relative">
           <CardHeader>
-            <CardTitle>Desired Output (Read-Only)</CardTitle>
+            <CardTitle>Desired Output</CardTitle>
             <CardDescription>
               View swap reward tokens allocation
             </CardDescription>
@@ -75,7 +75,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
 
           </CardContent>
           <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">
-            <Button className="w-full text-center">
+            <Button className="w-full text-center cursor-auto pointer-events-none">
               Current Selected: {totalBalance.toFixed(2)}
             </Button>
           </CardFooter>
