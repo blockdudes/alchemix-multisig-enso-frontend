@@ -10,7 +10,7 @@ const Loader = () => (
       wrapperStyle={{}}
       wrapperClass="dna-wrapper"
     />
-    {/* <p>fetching transaction data...</p> */}
+    <p>fetching transaction data...</p>
   </div>
 );
 
