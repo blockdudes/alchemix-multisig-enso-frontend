@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { JsonRpcSigner, ethers } from 'ethers';
 import anvil from "@/utils/anvil";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
-import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, multiSigAddress } from "@/lib/constants";
+import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, SAFE_API_URL, multiSigAddress } from "@/lib/constants";
 import SafeApiKit from "@safe-global/api-kit";
 import { SafeMultisigTransactionResponse } from "@safe-global/safe-core-sdk-types";
 
@@ -36,7 +36,8 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
                 const rpc_Signer = new ethers.Wallet(import.meta.env.VITE_SECRET_KEY, rpcProvider);
                 const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: injectedSigner });
                 const safeApiKit = new SafeApiKit({
-                    chainId: 1n // Converted CHAIN_ID to a bigint
+                    chainId: 1n, // Converted CHAIN_ID to a bigint
+                    
                 });
                 
                 const _safe = await Safe.create({ ethAdapter, safeAddress: multiSigAddress })

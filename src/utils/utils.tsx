@@ -5,8 +5,8 @@ import { OperationType } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit from '@safe-global/api-kit';
-import {  multiSigAddress, RPC_URL } from "@/lib/constants";
-// SAFE_API_URL
+import {  multiSigAddress, RPC_URL, SAFE_API_URL } from "@/lib/constants";
+
 
 
 // const tenderly: Tenderly = require("tenderly");

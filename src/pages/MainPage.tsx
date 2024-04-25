@@ -227,16 +227,19 @@ export const MainPage = () => {
 
 
   const fetchdata = async () => {
-
+    const data = await getPendingTransaction()
+    console.log(data)
+    return
     try {
-      const data = await getPendingTransaction()
-      const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
-      const filteredData = { ...data, results: filteredTransaction };
-
-      setTransactionQueue(filteredData)
-
-      if (filteredData.count > 0) {
-        // simulating pending transaction 
+      
+      // if (filteredData.count > 0) {
+        if (false) {
+          
+          // simulating pending transaction 
+          const data = await getPendingTransaction()
+          const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
+          const filteredData = { ...data, results: filteredTransaction };
+          setTransactionQueue(filteredData)
 
         const txToSimulate = await handleGetTransaction(filteredData.results[0].safeTxHash);
 
@@ -287,7 +290,7 @@ export const MainPage = () => {
     }
   };
 
-  // console.log(transactionData)
+
   useEffect(() => {
     fetchdata();
   }, []);
