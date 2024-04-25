@@ -5,7 +5,7 @@ import { OperationType } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit from '@safe-global/api-kit';
-import {  multiSigAddress, RPC_URL } from "@/lib/constants";
+import {  multiSigAddress, RPC_URL, SAFE_API_URL } from "@/lib/constants";
 
 
 
@@ -110,7 +110,7 @@ export const usdcSwapData = (
     const usdcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
     const output: EnsoAction[] = [];
     for (const [token, changes] of Object.entries(assetChanges)) {
-      const amount = (changes.rawAmount / BigInt(1000)).toString(); // todo: change this divide only used because enso route function is failing
+      const amount = (changes.rawAmount / BigInt(10000000)).toString(); // todo: change this divide only used because enso route function is failing
       // use token address and amount to create the ensorouteaction
       const approveToken = approveTokenData(token, ensoWalletAddress, amount);
       output.push(approveToken);
@@ -187,6 +187,7 @@ export const convertSimulationToAssetChanges = async (
   try {
     const assetChangesSimulation =
     simulation.transaction.transaction_info.asset_changes;
+    console.log(assetChangesSimulation)
   let assetChanges: Record<string, AssetChanges> = {};
 
   for (const changes of assetChangesSimulation) {
@@ -223,6 +224,7 @@ export const convertSimulationToAssetChanges = async (
   }
   return assetChanges;
   } catch (error) {
+    console.log(error)
     throw new Error("Error converting simulation to asset changes")
   }
   
@@ -284,8 +286,9 @@ export const buildClaimAndSwapTx = async (
     ensoWalletAddress
   );
 
+  // [...claimRewardEnsoData, ...swapData],
   const ensoClaimAndSwapTxData = await ensoBuildTx(
-    [...claimRewardEnsoData, ...swapData],
+    [...claimRewardEnsoData],
     safeAddress,
     chainId
   );
@@ -317,6 +320,7 @@ export const buildClaimAndSwapTx = async (
 
   return outputTx;
   } catch (error) {
+    console.log(error)
     throw new Error("Error building claim and swap transaction")
   }
   
@@ -470,7 +474,8 @@ export const getAllTransations = async () => {
   
   
     const safeApiKit = new SafeApiKit({
-      chainId: (await ethersProvider.getNetwork()).chainId
+      chainId: (await ethersProvider.getNetwork()).chainId,
+
     });
   
     const checksum_multisig = ethers.getAddress(multiSigAddress)
@@ -492,14 +497,17 @@ export const getPendingTransaction = async () => {
     const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
     
     const safeApiKit = new SafeApiKit({
-      chainId: (await ethersProvider.getNetwork()).chainId
+      chainId: (await ethersProvider.getNetwork()).chainId,
     });
   
+    console.log(safeApiKit)
     const checksum_multisig = ethers.getAddress(multiSigAddress)
     const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
-  
+    
+    console.log(transactions)
     return transactions;
   } catch (error) {
+    console.log(error)
     throw new Error("Error fetching pending transactions")
   }
 

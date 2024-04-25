@@ -116,8 +116,6 @@ export const MainPage = () => {
 
   const handleSwap = async () => {
 
-    
-
     const data = await getPendingTransaction()
     console.log(data)
     if (data.count > 0) {
@@ -234,16 +232,19 @@ export const MainPage = () => {
 
 
   const fetchdata = async () => {
-
+    const data = await getPendingTransaction()
+    console.log(data)
+    return
     try {
-      const data = await getPendingTransaction()
-      const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
-      const filteredData = { ...data, results: filteredTransaction };
-
-      setTransactionQueue(filteredData)
-
-      if (filteredData.count > 0) {
-        // simulating pending transaction 
+      
+      // if (filteredData.count > 0) {
+        if (false) {
+          
+          // simulating pending transaction 
+          const data = await getPendingTransaction()
+          const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
+          const filteredData = { ...data, results: filteredTransaction };
+          setTransactionQueue(filteredData)
 
         const txToSimulate = await handleGetTransaction(filteredData.results[0].safeTxHash);
 
@@ -294,7 +295,7 @@ export const MainPage = () => {
     }
   };
 
-  // console.log(transactionData)
+
   useEffect(() => {
     fetchdata();
   }, []);
@@ -366,8 +367,8 @@ export const MainPage = () => {
               transactionData ? (
                 <>
                 {
-                  transactionQueue != null && transactionQueue?.count > 0 ? (
-                    // false ? (
+                  // transactionQueue != null && transactionQueue?.count > 0 ? (
+                    false ? (
                     <>
                     <div className="flex flex-row gap-10 items-start justify-center px-4">
                       <ReadOnlyRewardsCard
@@ -409,7 +410,7 @@ export const MainPage = () => {
                       <PremiumButton
                         onClick={() => handleSwap()}
                         label="Swap"
-                        disabled={transactionQueue?.count > 0 || true}
+                        // disabled={transactionQueue?.count > 0 || true}
                       />
                     </div>
                     </>
