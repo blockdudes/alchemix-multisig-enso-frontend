@@ -46,16 +46,16 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
               <TableHeader>
 
                 <TableRow>
-                  <TableHead className="text-center w-[30px]"></TableHead>
-                  <TableHead className="text-left w-[200px]">Swapable Token</TableHead>
+                  {/* <TableHead className="text-center w-[30px]"></TableHead> */}
+                  <TableHead className="text-center">Swapable Token</TableHead>
                   {/* <TableHead className="text-right">Balance(%)</TableHead> */}
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Amount</TableHead>
 
                 </TableRow>
               </TableHeader>
               {/* </Table> */}
               <TableBody className="">
-                <TableCell colSpan={3}>
+                <TableCell colSpan={2}>
                 <ScrollArea className="h-60 w-full scroll-px-py">
 
                   {tokenData.map((item: TokenData, index: number) => (

@@ -627,7 +627,7 @@ export const MainPage = () => {
 
   //   fetchData();
   // }, []);
-  if (fetchDataError==null) {
+  if (fetchDataError!==null) {
     return (
       <>
       <div className="flex flex-col items-center">
