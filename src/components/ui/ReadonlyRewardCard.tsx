@@ -16,19 +16,13 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "../ui/checkbox";
+import { TokenData, Assets } from "@/Types";
 
-
-interface Assets {
-    id: number;
-    tokenName: string;
-    amount: number;
-    tick: boolean;
-}
 
 
 const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for demonstration
 
-    const totalValue = assets.reduce((total : number, item: Assets) => item.tick ? total + item.amount : total, 0);
+    const totalValue = assets.reduce((total : number, item: Assets) => item.tick ? total + item.dollarValue : total, 0);
 
     return (
         <>
@@ -46,7 +40,8 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                                 <TableRow>
                                     {/* <TableHead className="w-[80px]"></TableHead> */}
                                     <TableHead className="text-center">Claimable Tokens</TableHead>
-                                    <TableHead className="text-center">Balance($)</TableHead>
+                                    <TableHead className="text-center">Balance</TableHead>
+                                    <TableHead className="text-center">AMount($)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -61,14 +56,15 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                                         </TableCell> */}
                                         <TableCell className="font-medium text-center">{asset.tokenName}</TableCell>
                                         <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
+                                        <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </CardContent>
                     <CardFooter className="flex justify-center align-bottom">
-                        <Button className="w-[150px] w-full cursor-auto pointer-events-none">
-                            Total Value: <span className="ml-5">{totalValue.toFixed(2)}</span>
+                        <Button className="w-full cursor-auto pointer-events-none">
+                            Total Value: <span className="ml-5">${totalValue.toFixed(2)}</span>
                         </Button>
                     </CardFooter>
                 </Card>

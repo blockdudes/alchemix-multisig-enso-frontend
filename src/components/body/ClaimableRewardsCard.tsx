@@ -17,18 +17,12 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from 'react';
+import { Assets } from "@/Types";
 
 
-interface Asset {
-  address: string;
-  amount: number;
-  id: number;
-  tick: boolean;
-  tokenName: string;
-}
 
-const calculateTotalValue = (assets: Asset[]) => {
-  return assets.reduce((total: number, asset: Asset) => {
+const calculateTotalValue = (assets: Assets[]) => {
+  return assets.reduce((total: number, asset: Assets) => {
     if (asset.tick) {
       return total + asset.amount;
     } else {
@@ -37,7 +31,7 @@ const calculateTotalValue = (assets: Asset[]) => {
   }, 0);
 }
 
-const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
+const ClaimableRewardsCard = ({ assets }: { assets: Assets[] }) => {
 
 
   useEffect(() => {
@@ -49,15 +43,6 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
   const [items, setItems] = useState(assets);
   const [totalValue, setTotalValue] = useState(calculateTotalValue(assets));
 
-  // const handleSelect = (id: number) => {
-  //   console.log('handleSelect called');
-  //   setItems(items.map(item =>
-  //     item.id===id ? {...item, tick:!item.tick} : item
-  //     ));
-  //   setTotalValue(items.reduce((total, item) =>
-  //   item.id===id ? total + (item.tick ? -item.amount:item.amount): total,totalValue
-  //   ));
-  // };
 
   return (
     <>
@@ -75,11 +60,12 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
                 <TableRow>
                   {/* <TableHead className="w-[80px]"></TableHead> */}
                   <TableHead className="text-center">Claimable Tokens</TableHead>
-                  <TableHead className="text-right">Balance($)</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Amount($)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items && items.map((asset: Asset, index: number) => (
+                {items && items.map((asset: Assets, index: number) => (
                   <TableRow key={index} className="text-center">
                     {/* <TableCell className="font-medium">
                        <Checkbox
@@ -90,15 +76,16 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
                     </TableCell> */}
                     <TableCell className="font-medium ">{asset.tokenName}</TableCell>
                     <TableCell className="text-right">{asset.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${asset.dollarValue.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </CardContent>
           <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
-            <Button className="w-[150px] w-full cursor-auto pointer-events-none">
+            <Button className=" w-full cursor-auto pointer-events-none">
               Total Value:{" "}
-              <span className="ml-5">{(totalValue ?? 0).toFixed(2)}</span>
+              <span className="ml-5">${(totalValue ?? 0).toFixed(2)}</span>
             </Button>
           </CardFooter>
         </Card>

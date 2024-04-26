@@ -54,7 +54,7 @@ const RedirectToDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate('/dashboard');
+    navigate('/');
   }, [navigate]);
 
   return null;
@@ -73,11 +73,6 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainPage />} />
-          {/* <Route path="/dashboard" element={
-            <GlobalStateProvider>
-              <MainPage />
-            </GlobalStateProvider>
-          } /> */}
           <Route path="/transaction" element={
               <Transaction />
             // <ProtectedRoute>

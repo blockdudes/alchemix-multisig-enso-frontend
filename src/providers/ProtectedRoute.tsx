@@ -15,7 +15,7 @@ export const ProtectedRoute: React.FC<React.PropsWithChildren> = ({ children }) 
     if (walletStatus !== 'connected') {
       console.log("check 2", useActiveWalletConnectionStatus())
       // Redirect to the Authentication page or another appropriate page
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/" replace />;
     }
   
     return children;

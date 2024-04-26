@@ -18,17 +18,15 @@ import {
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "./scroll-area";
+import { TokenData } from "@/Types";
 
-interface TokenData {
-  token: string;
-  balance: number;
-  selected: boolean;
-}
 
 const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData }) => {
 
 
-  const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.balance, 0)
+  const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.dollarValue, 0)
+  
+  
 
 
   return (
@@ -42,47 +40,49 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table className="">
+            {/* <Table className=""> */}
               <TableHeader>
 
                 <TableRow>
-                  <TableHead className="text-center w-[30px]"></TableHead>
-                  <TableHead className="text-left w-[200px]">Swapable Token</TableHead>
+                  {/* <TableHead className="text-center w-[30px]"></TableHead> */}
+                  <TableHead className="text-center w-[200px]">Token</TableHead>
                   {/* <TableHead className="text-right">Balance(%)</TableHead> */}
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Amount</TableHead>
+                  <TableHead className="text-right">Value($)</TableHead>
 
                 </TableRow>
               </TableHeader>
-              <TableBody className="">
-                <ScrollArea className="h-60 w-full  border">
+              {/* <TableBody className=""> */}
+                <ScrollArea className="h-60 w-full  ">
 
                   {tokenData.map((item: TokenData, index: number) => (
                     <TableRow key={index} className="overflow-auto" >
 
 
-                      <TableCell className="font-medium text-start  w-[100px]" >
+                      {/* <TableCell className="font-medium text-start  w-[100px]" >
                         <Checkbox
                           id={`asset-${index}`}
                           checked={item.selected}
                           disabled
                           value={(item.balance / totalBalance * 100).toFixed(2)}
                         />
-                      </TableCell>
+                      </TableCell> */}
 
                       <TableCell className="text-start">{item.token}</TableCell>
                       {/* <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell> */}
                       <TableCell className="font-medium ">{item.balance.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium ">${item.dollarValue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </ScrollArea>
-              </TableBody>
-            </Table>
+              {/* </TableBody> */}
+            {/* </Table> */}
 
 
           </CardContent>
           <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">
             <Button className="w-full text-center cursor-auto pointer-events-none">
-              Current Selected: {totalBalance.toFixed(2)}
+              Converted: ${totalBalance.toFixed(2)}
             </Button>
           </CardFooter>
         </Card>
