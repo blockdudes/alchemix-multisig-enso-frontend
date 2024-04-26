@@ -76,6 +76,10 @@ export const MainPage = () => {
   const walletConnectionStatus = useActiveWalletConnectionStatus();
   const activeAccount = useActiveAccount();
 
+  // button loading
+  const [isSignButtonLoading, setIsSignButtonLoading] = useState(false);
+  const [isRejectButtonLoading, setIsRejectButtonLoading] = useState(false);
+
   const testAddress: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
 
@@ -127,6 +131,7 @@ export const MainPage = () => {
 
 
   const handleSignTx = async (isRejected: boolean, pendingTxData?: PendingTxData, newTransaction?: any) => {
+    setIsSignButtonLoading(true);
 
     try {
       let signTransaction: SafeTransaction | SafeMultisigTransactionResponse | null = null;
@@ -197,9 +202,9 @@ export const MainPage = () => {
     } catch (error) {
       console.log(error)
       throw error;
+    } finally {
+      setIsSignButtonLoading(false);
     }
-
-
   }
 
 
@@ -561,8 +566,14 @@ export const MainPage = () => {
                                 />
                               </div>
                               <div className="w-full p-4 flex justify-center items-center gap-5">
-                                <PremiumButton onClick={() => handleSignTx(false, pendingTransactions)} label="Sign" />
-                                <Button onClick={() => handleSignTx(true, pendingTransactions)}>Reject</Button>
+                                <PremiumButton
+                                onClick={() => handleSignTx(false, pendingTransactions)}
+                                label="Sign" />
+                                <Button
+                                variant="destructive"
+                                onClick={() => handleSignTx(true, pendingTransactions)}>
+                                  Reject
+                                  </Button>
                               </div>
                             </>
                           ) : (
