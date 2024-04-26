@@ -53,32 +53,23 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
 
                 </TableRow>
               </TableHeader>
-              </Table>
-              {/* <TableBody className=""> */}
-                <ScrollArea className="h-60 w-full">
+              {/* </Table> */}
+              <TableBody className="">
+                <TableCell colSpan={3}>
+                <ScrollArea className="h-60 w-full scroll-px-py">
 
                   {tokenData.map((item: TokenData, index: number) => (
-                    <TableRow key={index} className="overflow-auto" >
+                    <TableRow key={index} className="" >
 
-
-                      {/* <TableCell className="font-medium text-start  w-[100px]" > */}
-                        {/* <Checkbox
-                          id={`asset-${index}`}
-                          checked={item.selected}
-                          disabled
-                          value={(item.balance / totalBalance * 100).toFixed(2)}
-                        /> */}
-                      {/* </TableCell> */}
-
-                      <TableCell className="text-right">{item.token}</TableCell>
+                      <TableCell className="font-medium text-right">{item.token}</TableCell>
                       {/* <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell> */}
-                      <TableCell className="text-right font-medium ">{item.balance.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium text-right">{item.balance.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </ScrollArea>
-              {/* </TableBody> */}
-            {/* </Table> */}
-
+                </TableCell>
+              </TableBody>
+            </Table>
 
           </CardContent>
           <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">

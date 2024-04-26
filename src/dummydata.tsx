@@ -32,7 +32,7 @@ export const dummyData: PendingTxData = {
         "confirmationsRequired": 2,
         "confirmations": [
             {
-                "owner": "0x7962eBE98550d53A3608f9caADaCe72ef30De68C",
+                "owner": "0x37A1FB984316c971Fec44c1B8e49BE93d382d4B3",
                 "submissionDate": "2024-04-24T11:02:23.708276Z",
                 "transactionHash": undefined,
                 "signature": "0x901ece6c2bd5cf19df55ff14bac62074586d310e49514d72acb7240190ab7ed12101ae10327c993470967b11ff7d08f0c47ddc2b6cd43d4ddf5908b17ef4fbb01b",
