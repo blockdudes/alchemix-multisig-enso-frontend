@@ -190,27 +190,27 @@ export const Transaction = () => {
     }
 
 
-    const getTx = async () => {
-        try {
-            const queuedtransaction = await getPendingTransaction();
-            console.log(queuedtransaction)
-            const queuedMultisigTransaction = queuedtransaction.results.filter(item => item.isExecuted === false && item.origin === SAFE_TRANSACTION_ORIGIN);
-            console.log(queuedMultisigTransaction)
-            setQueuedTransactions(queuedMultisigTransaction)
+    // const getTx = async () => {
+    //     try {
+    //         const queuedtransaction = await getPendingTransaction();
+    //         console.log(queuedtransaction)
+    //         const queuedMultisigTransaction = queuedtransaction.results.filter(item => item.isExecuted === false && item.origin === SAFE_TRANSACTION_ORIGIN);
+    //         console.log(queuedMultisigTransaction)
+    //         setQueuedTransactions(queuedMultisigTransaction)
 
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-            throw error;
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error fetching transactions:', error);
+    //         throw error;
+    //     }
+    // }
 
 
     // const rawTransaction = await fetchdata();
     // setRawTransactionData(rawTransaction)
 
-    useEffect(() => {
-        getTx()
-    }, []);
+    // useEffect(() => {
+    //     getTx()
+    // }, []);
 
 
     const handleSignTx = async () => {

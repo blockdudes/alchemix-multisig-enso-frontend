@@ -21,6 +21,7 @@ import Loader from "@/components/ui/Loader";
 import { useActiveAccount } from "thirdweb/react";
 import ErrorPage from "./ErrorPage";
 import { getTheOwners } from "@/utils/helper";
+import { Button } from "@/components/ui/button";
 
 
 interface TokenData {
@@ -352,18 +353,63 @@ export const MainPage = () => {
 
   const transformTransactionDataClaimAndSwapAsset = (transactionData: any) => {
     const claimAndSwapAssets = transactionData && transactionData?.assetChanges.claimAndSwap;
-    const claimAndSwapTotal = claimAndSwapAssets && Object.values(claimAndSwapAssets).reduce((total: number, asset: any) => total + (asset.amount) as number, 0);
+    // const claimAndSwapTotal = claimAndSwapAssets && Object.values(claimAndSwapAssets).reduce((total: number, asset: any) => total + (asset.amount) as number, 0);
 
+    const outputTransformedData: TokenData[] = []
+    if (claimAndSwapAssets) {
+      for (const claimAndSwapAsset of Object.values(claimAndSwapAssets)) {
 
-    const dummyData: TokenData[] = [
-      {
-        token: 'usdc',
-        balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0),
-        selected: true
-      },
-    ];
+        const amount = (claimAndSwapAsset as any).amount
+        if (amount > 0) {
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
 
-    return dummyData;
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+          outputTransformedData.push({
+            token: (claimAndSwapAsset as any).symbol,
+            balance: (claimAndSwapAsset as any).amount,
+            selected: true
+          })
+        }
+      }
+    }
+
+    // const dummyData: TokenData[] = [
+    //   {
+    //     token: 'usdc',
+    //     balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0),
+    //     selected: true
+    //   },
+    // ];
+
+    return outputTransformedData;
 
   }
 
@@ -387,9 +433,9 @@ export const MainPage = () => {
           to: pendingTX?.pending?.to,
           value: pendingTX?.pending?.value
         };
-  
 
-        
+
+
         let endSimulation: EndSimulation = await reSimulateTx(
           CHAIN_ID,
           txData,
@@ -398,7 +444,7 @@ export const MainPage = () => {
         );
         const multisigClaimAssetChanges = endSimulation.claim[multiSigAddress]
         const multisigClaimAndSwapAssetChanges = endSimulation.claimAndSwap[multiSigAddress]
-     
+
         const outputTx = {
           data: pendingTX?.pending?.data,
           to: pendingTX?.pending?.to,
@@ -408,13 +454,14 @@ export const MainPage = () => {
             claimAndSwap: multisigClaimAndSwapAssetChanges,
           }
         }
-  
+
         setTransactionData(outputTx);
-  
+
       } catch (error) {
+        console.log(error)
         throw new Error("Error in fetching data");
       }
-  
+
     }
     else {
       try {
@@ -426,7 +473,7 @@ export const MainPage = () => {
         throw new Error("Error in fetching data");
       }
     }
-     };
+  };
 
 
   useEffect(() => {
@@ -498,11 +545,12 @@ export const MainPage = () => {
               true ? (
                 <>
                   {
-                    true ? (
+                    // true ? (
+                    transactionData != null ? (
                       <>
                         {
-                          // transactionQueue != null && transactionQueue?.count > 0 ? (
-                          false ? (
+                          pendingTransactions != null ? (
+                            // false ? (
                             <>
                               <div className="flex flex-row gap-10 items-start justify-center px-4">
                                 <ReadOnlyRewardsCard
@@ -512,8 +560,9 @@ export const MainPage = () => {
                                   tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
                                 />
                               </div>
-                              <div className="border p-10 rounded">
-                                <Transaction />
+                              <div className="w-full p-4 flex justify-center items-center gap-5">
+                                <PremiumButton onClick={() => handleSignTx(false, pendingTransactions)} label="Sign" />
+                                <Button onClick={() => handleSignTx(true, pendingTransactions)}>Reject</Button>
                               </div>
                             </>
                           ) : (
@@ -546,7 +595,6 @@ export const MainPage = () => {
                                   label="Swap"
                                 // disabled={transactionQueue?.count > 0 || true}
                                 />
-                                <button onClick={() => handleSignTx(true,)}>test reject</button>
                               </div>
                             </>
                           )
