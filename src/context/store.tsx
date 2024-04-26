@@ -36,10 +36,11 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
                 const rpc_Signer = new ethers.Wallet(import.meta.env.VITE_SECRET_KEY, rpcProvider);
                 const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: injectedSigner });
                 const safeApiKit = new SafeApiKit({
-                    chainId: 1n, // Converted CHAIN_ID to a bigint
+                    chainId: 11155111n, // Converted CHAIN_ID to a bigint
                     
                 });
                 
+                console.log(safeApiKit)
                 const _safe = await Safe.create({ ethAdapter, safeAddress: multiSigAddress })
 
 

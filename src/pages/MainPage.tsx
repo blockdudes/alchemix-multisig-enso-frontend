@@ -3,8 +3,8 @@ import ClaimableRewardsCard from "@/components/body/ClaimableRewardsCard";
 import DesiredOutputCard from "@/components/body/DesiredOutputCard";
 import Navbar from "@/components/header/Navbar";
 import PremiumButton from "@/components/ui/PremiumButton";
-import { buildClaimAndSwapTx, convertSimulationToAssetChanges, getEnsoWalletAddress, getPendingTransaction, reSimulateTx, simulateTx, usdcSwapData } from "@/utils/utils";
-import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
+import { EndSimulation, PendingTxData, buildClaimAndSwapTx, convertSimulationToAssetChanges, getEnsoWalletAddress, getPendingTransaction, reSimulateTx, simulateTx, usdcSwapData } from "@/utils/utils";
+import Safe, { EthersAdapter, SigningMethod } from "@safe-global/protocol-kit";
 import { OperationType, SafeMultisigTransactionResponse, SafeTransaction, SafeTransactionData } from "@safe-global/safe-core-sdk-types";
 import { JsonRpcSigner, ethers } from "ethers";
 import { useEffect, useState } from "react";
@@ -63,11 +63,13 @@ const getOwners = async () => {
 }
 
 
+
 export const MainPage = () => {
 
-  const { clientSigner,safeApiKit, ethAdapter, safe }: { clientSigner: JsonRpcSigner, safeApiKit:SafeApiKit, ethAdapter: EthersAdapter, safe: Safe } = useEthereum();
-  // const [transactionData, setTransactionData] = useState<EnsoTx | null>(null);
+  const { clientSigner, safeApiKit, ethAdapter, safe }: { clientSigner: JsonRpcSigner, safeApiKit: SafeApiKit, ethAdapter: EthersAdapter, safe: Safe } = useEthereum();
+
   const [transactionData, setTransactionData] = useState<any>(null);
+  const [pendingTransactions, setPendingTransactions] = useState<any>(null);
   const [transactionQueue, setTransactionQueue] = useState<any>(null);
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
@@ -76,19 +78,26 @@ export const MainPage = () => {
   const testAddress: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
 
+
   useEffect(() => {
-    getOwners().then(
-      data => {
-        setAuthorizedUsers([...data, testAddress.toLowerCase()]);
-      }).catch(
-        error => 
-        console.error('Error:', error));
+    try {
+      getOwners().then(
+        data => {
+          console.log(data);
+          setAuthorizedUsers([...data, testAddress.toLowerCase()]);
+        }).catch(
+          error =>
+            console.error('Error:', error));
+
+    } catch (error) {
+      console.log(error)
+    }
   }, []);
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
   const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
   const FXS_ADDRESS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
-  
+
   const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
 
 
@@ -105,38 +114,167 @@ export const MainPage = () => {
     //   chainId: 11155111n
     // });
 
-   try {
-    const tx: SafeMultisigTransactionResponse = await safeApiKit.getTransaction(safeTxHash)
-    return tx
-   } catch (error) {
-    throw error;
-   }
+    try {
+      const tx: SafeMultisigTransactionResponse = await safeApiKit.getTransaction(safeTxHash)
+      return tx
+    } catch (error) {
+      throw error;
+    }
 
   }
 
-  const handleSwap = async () => {
 
-    const data = await getPendingTransaction()
-    console.log(data)
-    if (data.count > 0) {
-      throw new Error("There are pending transactions");
+
+  const handleSignTx = async (isRejected: boolean, pendingTxData?: PendingTxData, newTransaction?: any) => {
+
+    try {
+      let signTransaction: SafeTransaction | SafeMultisigTransactionResponse | null = null;
+      let isProposed = true
+      if (pendingTxData && pendingTxData.pending) {
+        if (isRejected) {
+          if (pendingTxData.rejected) {
+            signTransaction = pendingTxData.rejected
+          }
+          else {
+            signTransaction = await safe.createRejectionTransaction(pendingTxData.pending.nonce)
+            isProposed = false
+          }
+        } else {
+          if (pendingTxData.pending) {
+            signTransaction = pendingTxData.pending
+          }
+
+        }
+      } else if (newTransaction) {
+        signTransaction = await safe.createTransaction({
+          transactions: [{
+            to: newTransaction.to,
+            value: newTransaction.value,
+            data: newTransaction.data,
+            operation: OperationType.DelegateCall, // required for security
+          }]
+        })
+        isProposed = false
+      }
+
+      if (signTransaction) {
+        let safeTxHash = ""
+        if (signTransaction.data) {
+          safeTxHash = await safe.getTransactionHash(signTransaction as SafeTransaction)
+        } else {
+          safeTxHash = (signTransaction as SafeMultisigTransactionResponse).safeTxHash
+        }
+
+        await safe.connect(
+          { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
+        )
+        const senderSignature = await safe.signHash(safeTxHash)
+
+        if (!isProposed) {
+
+          let checksumMultiSigAddress = ethers.getAddress(multiSigAddress)
+
+          const proposeTx = await safeApiKit.proposeTransaction({
+            safeAddress: checksumMultiSigAddress,
+            safeTransactionData: (signTransaction as SafeTransaction).data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
+            safeTxHash,
+            senderAddress: await clientSigner.getAddress(),
+            senderSignature: senderSignature.data,
+          })
+        } else {
+          const response = await safeApiKit.confirmTransaction(safeTxHash, senderSignature.data)
+        }
+
+      }
+      else {
+        throw new Error("No transaction to sign")
+      }
+
+
+
+
+    } catch (error) {
+      console.log(error)
+      throw error;
     }
+
+
+  }
+
+
+
+  // for testing proposal
+  const handleProposeCheck = async () => {
+
+    try {
+      let Transaction: SafeTransaction | null =
+        (
+          (await safe.createTransaction({
+            transactions: [
+              {
+                to: "0x37A1FB984316c971Fec44c1B8e49BE93d382d4B3",
+                value: "0",
+                data: "0xa9059cbb00000000000000000000000037a1fb984316c971fec44c1b8e49be93d382d4b300000000000000000000000000000000000000000000000000470de4df820000",
+                operation: OperationType.Call, // required for security
+              },
+            ],
+          }))) || null;
+
+      console.log(Transaction)
+      await safe.connect(
+        { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
+      )
+
+
+
+      console.log(await clientSigner.getAddress())
+      if (Transaction) {
+
+        const safeTxHash = await safe.getTransactionHash(Transaction)
+
+
+        // Sign transaction to verify that the transaction is coming from owner 1
+        const senderSignature = await safe.signHash(safeTxHash)
+
+        let checksumMultiSigAddress = ethers.getAddress(multiSigAddress)
+
+        const proposeTX = await safeApiKit.proposeTransaction({
+          safeAddress: checksumMultiSigAddress,
+          safeTransactionData: Transaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
+          safeTxHash,
+          senderAddress: await clientSigner.getAddress(),
+          senderSignature: senderSignature.data,
+        })
+
+        console.log(proposeTX)
+      }
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+
+
+  const handleSwap = async () => {
+    // if (data.count > 0) {
+    //   throw new Error("There are pending transactions");
+    // }
 
     // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
     // const signer = await ethersProvider.getSigner()
 
-    let safeTransaction: SafeTransaction | null =
-      (transactionData &&
-        (await safe.createTransaction({
-          transactions: [
-            {
-              to: transactionData.to,
-              value: transactionData.value,
-              data: transactionData.data,
-              operation: OperationType.DelegateCall, // required for security
-            },
-          ],
-        }))) || null;
+    // let safeTransaction: SafeTransaction | null =
+    //   (transactionData &&
+    //     (await safe.createTransaction({
+    //       transactions: [
+    //         {
+    //           to: transactionData.to,
+    //           value: transactionData.value,
+    //           data: transactionData.data,
+    //           operation: OperationType.DelegateCall, // required for security
+    //         },
+    //       ],
+    //     }))) || null;
 
     // const signer = await anvil.setup(1,OWNER1_ADDRESS)
 
@@ -169,10 +307,7 @@ export const MainPage = () => {
 
         const safeTxHash = await safe.getTransactionHash(safeTransaction)
 
-
-        // Sign transaction to verify that the transaction is coming from owner 1
-        // const senderSignature = await protocol.signHash(safeTxHash)
-        const ownerSig = generatePreValidatedSignature(await clientSigner.getAddress());
+        const senderSignature = await safe.signHash(safeTxHash)
 
         // safeTransaction.addSignature(ownerSig);
 
@@ -183,7 +318,7 @@ export const MainPage = () => {
           safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
           safeTxHash,
           senderAddress: await clientSigner.getAddress(),
-          senderSignature: ownerSig.data,
+          senderSignature: senderSignature.data,
           origin: SAFE_TRANSACTION_ORIGIN
         })
 
@@ -221,79 +356,77 @@ export const MainPage = () => {
 
 
     const dummyData: TokenData[] = [
-      { token: 'usdc', 
-      balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0), 
-      selected: true },
+      {
+        token: 'usdc',
+        balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0),
+        selected: true
+      },
     ];
 
     return dummyData;
 
   }
 
+  interface AssetChanges {
+    [token: string]: {
+      amount: number;
+      rawAmount: bigint;
+    };
+  }
 
   const fetchdata = async () => {
-    const data = await getPendingTransaction()
-    console.log(data)
-    return
-    try {
-      
-      // if (filteredData.count > 0) {
-        if (false) {
-          
-          // simulating pending transaction 
-          const data = await getPendingTransaction()
-          const filteredTransaction = data.results.filter(result => result.origin === SAFE_TRANSACTION_ORIGIN);
-          const filteredData = { ...data, results: filteredTransaction };
-          setTransactionQueue(filteredData)
+    const pendingTX = await getPendingTransaction() || null
+    pendingTX && setPendingTransactions(pendingTX)
 
-        const txToSimulate = await handleGetTransaction(filteredData.results[0].safeTxHash);
-
-
+    if (pendingTX) {
+      try {
         const txData = {
           chainId: CHAIN_ID,
-          data: txToSimulate?.data ,
+          data: pendingTX?.pending?.data,
           from: multiSigAddress,
-          to: txToSimulate?.to ,
-          value: txToSimulate?.value
+          to: pendingTX?.pending?.to,
+          value: pendingTX?.pending?.value
         };
+  
 
-
-        let multisigAssetChanges = await reSimulateTx(
+        
+        let endSimulation: EndSimulation = await reSimulateTx(
           CHAIN_ID,
           txData,
           multiSigAddress,
           SAFE_OWNER
         );
-
-
+        const multisigClaimAssetChanges = endSimulation.claim[multiSigAddress]
+        const multisigClaimAndSwapAssetChanges = endSimulation.claimAndSwap[multiSigAddress]
+     
         const outputTx = {
-          data: txToSimulate?.data,
-          to: txToSimulate?.to,
-          value: txToSimulate?.value,
+          data: pendingTX?.pending?.data,
+          to: pendingTX?.pending?.to,
+          value: pendingTX?.pending?.value,
           assetChanges: {
-            claim: multisigAssetChanges,
+            claim: multisigClaimAssetChanges,
+            claimAndSwap: multisigClaimAndSwapAssetChanges,
           }
         }
-
+  
         setTransactionData(outputTx);
-
+  
+      } catch (error) {
+        throw new Error("Error in fetching data");
       }
-      else {
-        try {
-          const result = await buildClaimAndSwapTx(CHAIN_ID, multiSigAddress, SAFE_OWNER);
-          console.log(result)
-          setTransactionData(result);
-          
-        } catch (error) {
-          console.log(error)
-        }
-
-      }
-
-    } catch (error) {
-      console.error(error);
+  
     }
-  };
+    else {
+      try {
+        const result = await buildClaimAndSwapTx(CHAIN_ID, multiSigAddress, SAFE_OWNER);
+        setTransactionData(result);
+
+      } catch (error) {
+        console.log(error)
+        throw new Error("Error in fetching data");
+      }
+    }
+     };
 
 
   useEffect(() => {
@@ -356,85 +489,87 @@ export const MainPage = () => {
 
   return (
     <>
-    {
-      walletConnectionStatus === "connected" ? (
-        <>
-        <Navbar />
-        {
-          authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
-            <>
+      {
+        walletConnectionStatus === "connected" ? (
+          <>
+            <Navbar />
             {
-              transactionData ? (
+              // authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+              true ? (
                 <>
-                {
-                  // transactionQueue != null && transactionQueue?.count > 0 ? (
-                    false ? (
-                    <>
-                    <div className="flex flex-row gap-10 items-start justify-center px-4">
-                      <ReadOnlyRewardsCard
-                        assets={transformTransactionDataClaimAsset(transactionData)}
-                      />
-                      <ReadonlyDesiredOutputCard
-                        tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
-                      />
-                    </div>
-                    <div className="border p-10 rounded">
-                      <Transaction />
-                    </div>
-                    </>
-                  ) : (
-                    <>
-                    <div className="flex flex-col ">
-                      {/* <div className="flex flex-row gap-10 items-center justify-center ">
-                      {Object.entries(metaData).map(([groupName, items], index) => (
-                        <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-                          {items.map((item, itemIndex) => (
-                            <MetadataCard
-                              key={itemIndex}
-                              text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
-                            />
-                          ))}
+                  {
+                    true ? (
+                      <>
+                        {
+                          // transactionQueue != null && transactionQueue?.count > 0 ? (
+                          false ? (
+                            <>
+                              <div className="flex flex-row gap-10 items-start justify-center px-4">
+                                <ReadOnlyRewardsCard
+                                  assets={transformTransactionDataClaimAsset(transactionData)}
+                                />
+                                <ReadonlyDesiredOutputCard
+                                  tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                                />
+                              </div>
+                              <div className="border p-10 rounded">
+                                <Transaction />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex flex-col ">
+                                {/* <div className="flex flex-row gap-10 items-center justify-center ">
+                        {Object.entries(metaData).map(([groupName, items], index) => (
+                          <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
+                            {items.map((item, itemIndex) => (
+                              <MetadataCard
+                                key={itemIndex}
+                                text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div> */}
+                                <div className="flex flex-row gap-10 items-start justify-center px-4">
+                                  <ClaimableRewardsCard
+                                    assets={transformTransactionDataClaimAsset(transactionData)}
+                                  />
+                                  <DesiredOutputCard
+                                    totalBalance={sumClaimAndSwapAmount as number}
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-center py-4">
+                                <PremiumButton
+                                  onClick={() => handleSwap()}
+                                  label="Swap"
+                                // disabled={transactionQueue?.count > 0 || true}
+                                />
+                                <button onClick={() => handleSignTx(true,)}>test reject</button>
+                              </div>
+                            </>
+                          )
+                        }
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <Loader />
                         </div>
-                      ))}
-                    </div> */}
-                      <div className="flex flex-row gap-10 items-start justify-center px-4">
-                        <ClaimableRewardsCard
-                          assets={transformTransactionDataClaimAsset(transactionData)}
-                        />
-                        <DesiredOutputCard
-                          totalBalance={sumClaimAndSwapAmount as number}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-center py-4">
-                      <PremiumButton
-                        onClick={() => handleSwap()}
-                        label="Swap"
-                        // disabled={transactionQueue?.count > 0 || true}
-                      />
-                    </div>
-                    </>
-                  )
-                }
+                      </>
+                    )
+                  }
                 </>
               ) : (
-                <>
-                <div>
-                  <Loader />
-                </div>
-                </>
+                <ErrorPage />
               )
             }
-            </>
-          ) : (
-              <ErrorPage />
-          )
-        }
-        </>
-      ) : (
-        <AuthenticationPage />
-      )
-    }
+          </>
+        ) : (
+          <AuthenticationPage />
+        )
+      }
     </>
   );
 }

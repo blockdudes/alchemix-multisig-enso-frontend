@@ -1,11 +1,11 @@
 import axios from "axios";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 // import { ethers, Interface, Result, Transaction } from "ethers";
-import { OperationType } from "@safe-global/safe-core-sdk-types";
+import { OperationType, SafeMultisigTransactionResponse } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
-import SafeApiKit from '@safe-global/api-kit';
-import {  multiSigAddress, RPC_URL, SAFE_API_URL } from "@/lib/constants";
+import SafeApiKit, { SafeMultisigTransactionListResponse } from '@safe-global/api-kit';
+import {  multiSigAddress, RPC_URL, SAFE_API_URL, SAFE_TRANSACTION_ORIGIN } from "@/lib/constants";
 
 
 
@@ -55,6 +55,11 @@ interface EnsoRouteAction extends EnsoAction {
     amountIn: string;
     receiver: string;
   };
+}
+
+export interface EndSimulation {
+  claim: Record<string, AssetChanges>;
+  claimAndSwap: Record<string, AssetChanges>;
 }
 
 let safeSdk: Safe;
@@ -491,28 +496,103 @@ export const getAllTransations = async () => {
 }
 
 
-export const getPendingTransaction = async () => {
-  try {
+// export const getPendingTransaction = async () => {
+//   try {
     
-    const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
+//     const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
     
-    const safeApiKit = new SafeApiKit({
-      chainId: (await ethersProvider.getNetwork()).chainId,
-    });
+//     const safeApiKit = new SafeApiKit({
+//       chainId: (await ethersProvider.getNetwork()).chainId,
+//     });
   
-    console.log(safeApiKit)
-    const checksum_multisig = ethers.getAddress(multiSigAddress)
-    const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
+//     console.log(safeApiKit)
+//     const checksum_multisig = ethers.getAddress(multiSigAddress)
+//     const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
     
-    console.log(transactions)
-    return transactions;
-  } catch (error) {
-    console.log(error)
-    throw new Error("Error fetching pending transactions")
+//     console.log(transactions)
+//     return transactions;
+//   } catch (error) {
+//     console.log(error)
+//     throw new Error("Error fetching pending transactions")
+//   }
+
+// }
+
+const processAssetChanges = (
+  assetChanges: Record<string, AssetChanges>,
+  changes: any,
+  tokenAddr: string,
+  amount: number,
+  rawAmount: bigint
+): Record<string, AssetChanges> => {
+  let updatedAssetChanges = { ...assetChanges };
+  const toAddress = changes.to;
+  const fromAddress = changes.from;
+
+  if (changes.type === "Transfer" || changes.type === "Mint") {
+    updatedAssetChanges = updateAssetChanges(
+      updatedAssetChanges,
+      toAddress,
+      tokenAddr,
+      amount,
+      rawAmount
+    );
   }
 
-}
+  if (changes.type === "Transfer" || changes.type === "Burn") {
+    updatedAssetChanges = updateAssetChanges(
+      updatedAssetChanges,
+      fromAddress,
+      tokenAddr,
+      -amount,
+      -rawAmount
+    );
+  }
 
+  return updatedAssetChanges;
+};
+
+export const convertEndSimulationToAssetChanges = async (
+  simulation: any,
+  assetManagers: string[],
+  multiSigAddress: string
+): Promise<EndSimulation> => {
+  const assetChangesSimulation =
+    simulation.transaction.transaction_info.asset_changes;
+  let assetChanges: Record<string, AssetChanges> = {};
+  let claimRewards: Record<string, AssetChanges> = {};
+
+  for (const changes of assetChangesSimulation) {
+    let tokenAddr = changes.token_info.contract_address;
+    if (changes.token_info.type === "Native" || !tokenAddr) {
+      tokenAddr = ethAddress;
+    }
+    const amount = Number(changes.amount);
+    const rawAmount = BigInt(changes.raw_amount);
+
+    const toAddress = changes.to;
+    const fromAddress = changes.from;
+
+    assetChanges = processAssetChanges(
+      assetChanges,
+      changes,
+      tokenAddr,
+      amount,
+      rawAmount
+    );
+
+    if (toAddress === multiSigAddress && assetManagers.includes(fromAddress)) {
+      claimRewards = processAssetChanges(
+        claimRewards,
+        changes,
+        tokenAddr,
+        amount,
+        rawAmount
+      );
+    }
+  }
+  return { claim: claimRewards, claimAndSwap: assetChanges };
+};
 
 export const reSimulateTx = async (
   chainId: string,
@@ -531,14 +611,17 @@ export const reSimulateTx = async (
    
     console.log(claimAndSwapTxData)
   
-    const assetChanges = await convertSimulationToAssetChanges(
-      claimAndSwapTxData
+    const assetChanges: EndSimulation = await convertEndSimulationToAssetChanges(
+      claimAndSwapTxData,
+      [threePoolManagerAddress],
+      safeAddress
     );
     
+  return assetChanges
+    // const multisigAssetChanges = assetChanges.claim[multiSigAddress];
+    // const multisigAssetChanges = assetChanges.claim[multiSigAddress];
   
-    const multisigAssetChanges = assetChanges[multiSigAddress];
-  
-    return multisigAssetChanges;
+    // return multisigAssetChanges;
     
     
   } catch (error) {
@@ -548,5 +631,89 @@ export const reSimulateTx = async (
 
 }
 
-// export const rejectionTransaction = await protocolKit.createRejectionTransaction(safeTransaction.data.nonce)
 
+export interface PendingTxData {
+  pending?: SafeMultisigTransactionResponse;
+  rejected?: SafeMultisigTransactionResponse;
+  }
+  export const getPendingTransaction =
+  async (): Promise<PendingTxData | null> => {
+  try {
+  const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
+  
+    const safeApiKit = new SafeApiKit({
+      chainId: (await ethersProvider.getNetwork()).chainId,
+      // txServiceUrl: SAFE_API_URL
+    });
+  
+    const checksum_multisig = ethers.getAddress(multiSigAddress);
+    const pendingTxData: SafeMultisigTransactionListResponse =
+      await safeApiKit.getPendingTransactions(checksum_multisig);
+    const pendingTxs: PendingTxData[] = [];
+  
+    const ensoPendingTxs: Record<number, SafeMultisigTransactionResponse[]> =
+      {};
+  
+    for (const tx of pendingTxData.results) {
+      if (tx.origin === SAFE_TRANSACTION_ORIGIN) {
+        if (ensoPendingTxs[tx.nonce]) {
+          ensoPendingTxs[tx.nonce].push(tx);
+        } else {
+          ensoPendingTxs[tx.nonce] = [tx];
+        }
+      }
+    }
+  
+    for (const [_, txs] of Object.entries(ensoPendingTxs)) {
+      let isTxRejected = false;
+      let pendingTx: SafeMultisigTransactionResponse | undefined = undefined;
+      let rejectedTx: SafeMultisigTransactionResponse | undefined = undefined;
+  
+      for (const tx of txs) {
+        const confirmationsRequired = tx.confirmationsRequired;
+        const confirmations = tx.confirmations?.length ?? 0;
+        let txConfirmed = false;
+  
+        if (confirmations >= confirmationsRequired) {
+          txConfirmed = true;
+        }
+  
+        const isRejected = tx.data == null && tx.value === "0";
+  
+        if (!isRejected) {
+          pendingTx = tx;
+        } else {
+          rejectedTx = tx;
+        }
+  
+        if (!isTxRejected && txConfirmed && isRejected) {
+          isTxRejected = true;
+        }
+      }
+  
+      let txData: PendingTxData | undefined;
+      if (pendingTx && !isTxRejected) {
+        txData = {};
+        txData.pending = pendingTx;
+        if (rejectedTx) {
+          txData.rejected = rejectedTx;
+        }
+      }
+  
+      if (txData) {
+        pendingTxs.push(txData);
+      }
+    }
+  
+    if (pendingTxs.length === 0) {
+      return null;
+    } else {
+      return pendingTxs[0];
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error fetching pending transactions");
+  }
+  
+  };
+  

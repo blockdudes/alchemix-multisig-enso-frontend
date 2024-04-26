@@ -39,6 +39,7 @@ import Safe, { EthersAdapter, SigningMethod } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
 import { OperationType } from "@safe-global/safe-core-sdk-types";
 import Modal from "@/components/ui/Modal";
+import { multiSigAddress } from "@/lib/constants";
 
 interface TokenData {
   token: string;
@@ -71,16 +72,16 @@ export const Transaction = ({ rawTX }: any) => {
   const [queuedTransactions, setQueuedTransactions] = useState<any>(null);
   const [rawTransactionData, setRawTransactionData] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [nonce, setNonce] = useState<number>(0);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  const multisigAddress = import.meta.env.VITE_MULTISIG_ADDRESS;
 
 
 
   const fetchdata = async () => {
     try {
-      const result = await buildClaimAndSwapTx("1", multisigAddress, "0x5788F90196954A272347aEe78c3b3F86F548D0a9");
+      const result = await buildClaimAndSwapTx("1", multiSigAddress, "0x5788F90196954A272347aEe78c3b3F86F548D0a9");
       return result
     } catch (error) {
       console.error(error);
@@ -220,9 +221,10 @@ export const Transaction = ({ rawTX }: any) => {
 
   }
 
-  const handleRejectTx = async () => {
+  
+  const handleRejectTx = async (nonce: number) => {
 
-    let nonce = queuedTransactions[0].nonce;
+
     const ethersProvider = new ethers.BrowserProvider(window.ethereum)
     const signer = await ethersProvider.getSigner()
 
@@ -230,12 +232,12 @@ export const Transaction = ({ rawTX }: any) => {
 
     // const protocol = new protocolKit();
     try {
-      const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" });
+      const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
 
       const reject_transasction = await protocol.createRejectionTransaction(nonce)
 
       await protocol.connect(
-        { ethAdapter: ethAdapter, safeAddress: "0xab850A24A158Db25a75376fDaa19ef1717cA5F88" }
+        { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
       )
 
 
@@ -320,7 +322,7 @@ export const Transaction = ({ rawTX }: any) => {
                             </div>
                             <div className="flex justify-center items-center gap-10 py-2">
                               <PremiumButton onClick={() => handleSignTx()} label="Sign" />
-                              <Button onClick={() => handleRejectTx()}>Reject</Button>
+                              <Button onClick={() => handleRejectTx(nonce)}>Reject</Button>
                             </div>
                           </DialogDescription>
                         </DialogHeader>

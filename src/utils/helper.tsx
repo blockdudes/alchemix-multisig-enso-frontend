@@ -643,8 +643,22 @@ export const getTheOwners = async () => {
     },
     { stateMutability: "payable", type: "receive" },
   ];
-  const contract = new ethers.Contract(contractAddress, contractABI, provider);
-  const result = await contract.getOwners();
-  const resArray = [...result.values()];
-  return resArray;
+
+  try {
+    if (!provider) {
+      throw new Error('Provider is not set');
+    }
+
+    const contract = new ethers.Contract(contractAddress, contractABI, provider);
+
+    const result = await contract.getOwners();
+    const resArray = [...result.values()];
+    return resArray;
+    
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
 };
+
+
