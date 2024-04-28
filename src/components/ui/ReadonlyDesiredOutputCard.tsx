@@ -39,44 +39,40 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
               View swap reward tokens allocation
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {/* <Table className=""> */}
+          <CardContent >
+            <Table className="">
               <TableHeader>
 
                 <TableRow>
                   {/* <TableHead className="text-center w-[30px]"></TableHead> */}
-                  <TableHead className="text-center w-[200px]">Token</TableHead>
+                  <TableHead className="text-center  ">Token</TableHead>
                   {/* <TableHead className="text-right">Balance(%)</TableHead> */}
                   <TableHead className="text-center">Amount</TableHead>
-                  <TableHead className="text-right">Value($)</TableHead>
+                  <TableHead className="text-center">Value($)</TableHead>
 
                 </TableRow>
               </TableHeader>
               {/* <TableBody className=""> */}
-                <ScrollArea className="h-60 w-full  ">
+             
+
+                <TableBody className="">
+                <TableCell colSpan={3}>
+                <ScrollArea className="h-60 w-full scroll-px-py">
 
                   {tokenData.map((item: TokenData, index: number) => (
-                    <TableRow key={index} className="overflow-auto" >
+                    <TableRow key={index} className="" >
 
-
-                      {/* <TableCell className="font-medium text-start  w-[100px]" >
-                        <Checkbox
-                          id={`asset-${index}`}
-                          checked={item.selected}
-                          disabled
-                          value={(item.balance / totalBalance * 100).toFixed(2)}
-                        />
-                      </TableCell> */}
-
-                      <TableCell className="text-start">{item.token}</TableCell>
+                      <TableCell className="font-medium text-center">{item.token}</TableCell>
                       {/* <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell> */}
-                      <TableCell className="font-medium ">{item.balance.toFixed(2)}</TableCell>
-                      <TableCell className="font-medium ">${item.dollarValue.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium text-center">{item.balance.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium text-center">${item.dollarValue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </ScrollArea>
+                </TableCell>
+              </TableBody>
               {/* </TableBody> */}
-            {/* </Table> */}
+            </Table>
 
 
           </CardContent>
