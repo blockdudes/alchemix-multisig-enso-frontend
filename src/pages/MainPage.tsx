@@ -105,6 +105,8 @@ export const MainPage = () => {
           setAuthorizedUsers([...data, testAddress.toLowerCase()]);
         })
         .catch((error) => console.error("Error:", error));
+
+      isExecutable();
     } catch (error) {
       toast({
         title: error as string,
@@ -113,9 +115,7 @@ export const MainPage = () => {
     }
   }, [safe]);
 
-  useEffect(() => {
-    isExecutable();
-  }, []);
+  useEffect(() => {}, []);
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
   const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
@@ -228,6 +228,7 @@ export const MainPage = () => {
 
   const isExecutable = async () => {
     const nonce = await safe.getNonce();
+    console.log("firstNonce", nonce);
     const ourNonce = pendingTransactions && pendingTransactions.pending.nonce;
     //  return nonce === ourNonce
     setCheckExecutable(nonce === ourNonce);
@@ -409,18 +410,18 @@ export const MainPage = () => {
   const checkIfRejected = () => {
     // console.log(pendingTransactions, typeof(pendingTransactions));
     const txnData = pendingTransactions?.rejected;
-    // console.log(txnData, typeof(txnData));
-    if (!txnData) {
-      return false;
-    }
-    const user = activeAccount?.address.toLowerCase();
+    console.log( "trexx",txnData, typeof(txnData));
     let hasRejected: boolean = false;
-    for (const item of txnData?.confirmations) {
-      if (item.owner.toLowerCase() === user) {
-        hasRejected = true;
-        break;
+    if (txnData) {
+      const user = activeAccount?.address.toLowerCase();
+      for (const item of txnData?.confirmations) {
+        if (item.owner.toLowerCase() === user) {
+          hasRejected = true;
+          break;
+        }
       }
     }
+   
 
     console.log("rejected", hasRejected);
     return hasRejected;
@@ -437,6 +438,8 @@ export const MainPage = () => {
       const confirmations_required = txnData?.confirmationsRequired;
       confirmed = confirmations_given >= confirmations_required;
     }
+
+    console.log("Conffirmed", confirmed)
 
     setIsConfirmed(confirmed);
   };
@@ -506,7 +509,7 @@ export const MainPage = () => {
 
   useEffect(() => {
     fetchdata();
-    checkIfConfirmed( )
+    checkIfConfirmed();
   }, []);
 
   console.log(transactionData);
@@ -595,63 +598,64 @@ export const MainPage = () => {
                             />
                           </div>
                           <div className="w-full p-4 flex justify-center items-center gap-5">
-                            {isConfirmed ? (
-                            <>
-                              <PremiumButton
-                                onClick={() =>
-                                  handleSignTx(false, pendingTransactions)
-                                }
-                                hide={checkIfSigned()}
-                                // onClick={() =>
-                                //   handleSignTx(false, pendingTransactions)
-                                // }
-                                label="Sign"
-                              />
-                              <Button
-                                variant="destructive"
-                                hidden={checkIfRejected()}
-                                onClick={() =>
-                                  handleSignTx(true, pendingTransactions)
-                                }
-                              >
-                                {isRejectButtonLoading ? (
-                                  <>
-                                    <ThreeDots
-                                      visible={true}
-                                      height="20"
-                                      width="20"
-                                      color="#000000"
-                                      radius="9"
-                                      ariaLabel="three-dots-loading"
-                                      wrapperStyle={{}}
-                                      wrapperClass=""
-                                    />
-                                  </>
-                                ) : (
-                                  <>Reject</>
-                                )}
-                              </Button>
-                            </>
-                            ) :  <TooltipProvider delayDuration={10}>
-                            <Tooltip>
-                              <TooltipTrigger>
+                            {!isConfirmed ? (
+                              <>
                                 <PremiumButton
                                   onClick={() =>
-                                    handleConfirmTX(
-                                      pendingTransactions.safeTxHash
-                                    )
+                                    handleSignTx(false, pendingTransactions)
                                   }
-                                  label="Confirm"
-                                  disabled={!checkExecutable}
+                                  hide={checkIfSigned()}
+                                  // onClick={() =>
+                                  //   handleSignTx(false, pendingTransactions)
+                                  // }
+                                  label="Sign"
                                 />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {!checkExecutable &&
-                                  "Execute tx with lowest nonce first"}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>} 
-                           
+                                <Button
+                                  variant="destructive"
+                                  hidden={checkIfRejected()}
+                                  onClick={() =>
+                                    handleSignTx(true, pendingTransactions)
+                                  }
+                                >
+                                  {isRejectButtonLoading ? (
+                                    <>
+                                      <ThreeDots
+                                        visible={true}
+                                        height="20"
+                                        width="20"
+                                        color="#000000"
+                                        radius="9"
+                                        ariaLabel="three-dots-loading"
+                                        wrapperStyle={{}}
+                                        wrapperClass=""
+                                      />
+                                    </>
+                                  ) : (
+                                    <>Reject</>
+                                  )}
+                                </Button>
+                              </>
+                            ) : (
+                              <TooltipProvider delayDuration={10}>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <PremiumButton
+                                      onClick={() =>
+                                        handleConfirmTX(
+                                          pendingTransactions.safeTxHash
+                                        )
+                                      }
+                                      label="Confirm"
+                                      disabled={!checkExecutable}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {!checkExecutable &&
+                                      "Execute tx with lowest nonce first"}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                           </div>
                         </>
                       ) : (
