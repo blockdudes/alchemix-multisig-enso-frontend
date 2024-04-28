@@ -41,7 +41,7 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                                     {/* <TableHead className="w-[80px]"></TableHead> */}
                                     <TableHead className="text-center">Claimable Tokens</TableHead>
                                     <TableHead className="text-center">Balance</TableHead>
-                                    <TableHead className="text-center">AMount($)</TableHead>
+                                    <TableHead className="text-center">Amount($)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -56,7 +56,7 @@ const ReadOnlyRewardsCard = ({ assets }: any) => { // Default totalValue for dem
                                         </TableCell> */}
                                         <TableCell className="font-medium text-center">{asset.tokenName}</TableCell>
                                         <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
-                                        <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
+                                        <TableCell className="text-center">${asset.dollarValue.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
