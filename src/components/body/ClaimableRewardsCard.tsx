@@ -18,17 +18,16 @@ import {
 import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from 'react';
 
-
-interface Asset {
-  address: string;
-  amount: number;
+interface Assets {
   id: number;
-  tick: boolean;
   tokenName: string;
+  amount: number;
+  tick: boolean;
+  dollarValue: number;
 }
 
-const calculateTotalValue = (assets: Asset[]) => {
-  return assets.reduce((total: number, asset: Asset) => {
+const calculateTotalValue = (assets: Assets[]) => {
+  return assets.reduce((total: number, asset: Assets) => {
     if (asset.tick) {
       return total + asset.amount;
     } else {
@@ -37,7 +36,7 @@ const calculateTotalValue = (assets: Asset[]) => {
   }, 0);
 }
 
-const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
+const ClaimableRewardsCard = ({ assets }: { assets: Assets[] }) => {
 
 
   useEffect(() => {
@@ -75,11 +74,12 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
                 <TableRow>
                   {/* <TableHead className="w-[80px]"></TableHead> */}
                   <TableHead className="text-center">Claimable Tokens</TableHead>
-                  <TableHead className="text-right">Balance($)</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Amount($)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items && items.map((asset: Asset, index: number) => (
+                {items && items.map((asset: Assets, index: number) => (
                   <TableRow key={index} className="text-center">
                     {/* <TableCell className="font-medium">
                        <Checkbox
@@ -90,6 +90,7 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
                     </TableCell> */}
                     <TableCell className="font-medium ">{asset.tokenName}</TableCell>
                     <TableCell className="text-right">{asset.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${asset.dollarValue.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -98,7 +99,7 @@ const ClaimableRewardsCard = ({ assets }: { assets: Asset[] }) => {
           <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
             <Button className="w-[150px] w-full cursor-auto pointer-events-none">
               Total Value:{" "}
-              <span className="ml-5">{(totalValue ?? 0).toFixed(2)}</span>
+              <span className="ml-5">${(totalValue ?? 0).toFixed(2)}</span>
             </Button>
           </CardFooter>
         </Card>

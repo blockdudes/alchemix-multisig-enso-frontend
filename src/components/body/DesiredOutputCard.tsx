@@ -140,8 +140,9 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                 <div>
                   <div className="flex justify-between p-2 pl-12 text-slate-400 text-sm  ">
                     <div className="h-0 my-0 mx-0 border-0 opacity-0" />
-                    <div className="table-cell">Swapable Token</div>
-                    <div className="table-cell">Balance (%)</div>
+                    <div className="table-cell">Token</div>
+                    <div className="table-cell">Balance</div>
+                    <div className="table-cell">Amount($)</div>
                   </div>
                   <hr />
                   {data.map((item, index) => {
@@ -178,9 +179,9 @@ const handleSliderChange = (index : number, newPercentage : number) => {
             </form>
           </CardContent>
           <CardFooter className="absolute bottom-0 w-full flex flex-col justify-center gap-1 ">
-            <CardDescription className="w-full text-right ">
+            {/* <CardDescription className="w-full text-right ">
             Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
-            </CardDescription>
+            </CardDescription> */}
             <Button className="w-[150px] w-full cursor-auto pointer-events-none" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
           </CardFooter>
 

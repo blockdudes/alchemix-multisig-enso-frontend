@@ -44,10 +44,13 @@ import ErrorPage from "./ErrorPage";
 import { getTheOwners } from "@/utils/helper";
 import { Button } from "@/components/ui/button";
 import { ThreeDots } from "react-loader-spinner";
+import { useToast } from "@/components/ui/use-toast";
+
 
 interface TokenData {
   token: string;
   balance: number;
+  dollarValue: number;
   selected: boolean;
 }
 
@@ -104,6 +107,8 @@ export const MainPage = () => {
   const walletConnectionStatus = useActiveWalletConnectionStatus();
   const activeAccount = useActiveAccount();
 
+  const { toast } = useToast();
+
   // button loading
   const [isSwapButtonLoading, setIsSwapButtonLoading] = useState(false);
   const [isSignButtonLoading, setIsSignButtonLoading] = useState(false);
@@ -118,16 +123,20 @@ export const MainPage = () => {
 
   useEffect(() => {
     try {
-      getOwners()
+      safe
+        .getOwners()
         .then((data) => {
           console.log(data);
           setAuthorizedUsers([...data, testAddress.toLowerCase()]);
         })
         .catch((error) => console.error("Error:", error));
     } catch (error) {
+      toast({
+        title: error as string, 
+      });
       console.log(error);
     }
-  }, []);
+  }, [safe]);
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
   const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
@@ -490,14 +499,15 @@ export const MainPage = () => {
 
   // check if completed required confirmations
   const checkIfConfirmed = () => {
+    let confirmed = false;
     const txnData = pendingTransactions?.pending;
     console.log(txnData, typeof(txnData));
-    if (!txnData) {
-      return false;
-    }
+    if (txnData) {
     const confirmations_given = txnData?.confirmations.length;
     const confirmations_required = txnData?.confirmationsRequired;
-    return confirmations_given >= confirmations_required;
+    confirmed = confirmations_given >= confirmations_required;
+    }
+    return confirmed;
   }
   console.log(checkIfConfirmed());
 

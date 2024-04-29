@@ -23,12 +23,13 @@ interface TokenData {
   token: string;
   balance: number;
   selected: boolean;
+  dollarValue: number;
 }
 
 const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData }) => {
 
 
-  const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.balance, 0)
+  const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.dollarValue, 0)
 
 
   return (
@@ -47,15 +48,16 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
 
                 <TableRow>
                   {/* <TableHead className="text-center w-[30px]"></TableHead> */}
-                  <TableHead className="text-center">Swapable Token</TableHead>
+                  <TableHead className="text-center">Token</TableHead>
                   {/* <TableHead className="text-right">Balance(%)</TableHead> */}
                   <TableHead className="text-center">Amount</TableHead>
+                  <TableHead className="text-center">Value($)</TableHead>
 
                 </TableRow>
               </TableHeader>
               {/* </Table> */}
               <TableBody className="">
-                <TableCell colSpan={2}>
+                <TableCell colSpan={3}>
                 <ScrollArea className="h-60 w-full scroll-px-py">
 
                   {tokenData.map((item: TokenData, index: number) => (
@@ -64,6 +66,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
                       <TableCell className="font-medium text-right">{item.token}</TableCell>
                       {/* <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell> */}
                       <TableCell className="font-medium text-right">{item.balance.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium text-right">${item.dollarValue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </ScrollArea>
@@ -74,7 +77,7 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
           </CardContent>
           <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">
             <Button className="w-full text-center cursor-auto pointer-events-none">
-              Current Selected: {totalBalance.toFixed(2)}
+              Current Selected: ${totalBalance.toFixed(2)}
             </Button>
           </CardFooter>
         </Card>

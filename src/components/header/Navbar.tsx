@@ -8,7 +8,7 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     const handleRedirect = () => {
-        navigate('/dashboard');
+        navigate('/');
     };
 
     return (

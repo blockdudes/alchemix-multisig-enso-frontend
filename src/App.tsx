@@ -1,13 +1,13 @@
 
-import { useActiveWalletConnectionStatus } from "thirdweb/react";
-import { useState } from 'react';
+// import { useActiveWalletConnectionStatus } from "thirdweb/react";
+// import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Transaction } from "./pages/Transaction";
 import { MainPage } from "./pages/MainPage";
-import { ProtectedRoute } from "./providers/ProtectedRoute";
-import GlobalStateProvider from "./context/store";
+// import { ProtectedRoute } from "./providers/ProtectedRoute";
+// import GlobalStateProvider from "./context/store";
 
 interface BaseMetadata {
   key: string;
@@ -54,7 +54,7 @@ const RedirectToDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate('/dashboard');
+    navigate('/');
   }, [navigate]);
 
   return null;
@@ -64,20 +64,12 @@ const RedirectToDashboard = () => {
 
 
 const App = () => {
-  const [totalValue, setTotalValue] = useState(0);
-  const [value, setValue] = useState(0);
-
 
   return (
     <>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainPage />} />
-          {/* <Route path="/dashboard" element={
-            <GlobalStateProvider>
-              <MainPage />
-            </GlobalStateProvider>
-          } /> */}
           <Route path="/transaction" element={
               <Transaction />
             // <ProtectedRoute>
