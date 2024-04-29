@@ -154,16 +154,20 @@ export const MainPage = () => {
     pendingTxData?: PendingTxData,
     isNewTx: boolean = false
   ) => {
-    if (!isRejected) {
-      setIsSignButtonLoading(true);
-    } else {
-      if (pendingTxData===undefined && isNewTx) {
-        setIsSwapButtonLoading(true);
-      } else {
-        setIsRejectButtonLoading(true);
-      }
-    }
     try {
+      if (!isRejected && pendingTransactions) {
+        setIsSignButtonLoading(true);
+        console.log("1")
+      }
+      else if (!isRejected && pendingTxData === undefined && isNewTx) {
+        setIsSwapButtonLoading(true);
+      }
+      else if (isRejected) {
+            setIsRejectButtonLoading(true);
+      }
+      else {
+        throw new Error("Something went wrong with validation");
+      }
       let signTransaction:
         | SafeTransaction
         | SafeMultisigTransactionResponse
