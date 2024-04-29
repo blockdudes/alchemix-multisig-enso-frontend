@@ -1,8 +1,9 @@
-import logo from "../assets/warning.png"
+import logo from "../assets/warning.png";
+
 const ErrorPage = ({errorTitle, errorDescription}) => {
   return (
     <div className='flex flex-col items-center justify-center h-[80vh] mt-6 gap-6 '>
-      <div className="w-40   ">
+      <div className="w-40">
         <img src={logo} alt="" />
 
       </div>
