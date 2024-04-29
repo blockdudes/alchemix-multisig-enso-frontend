@@ -388,7 +388,7 @@ export const MainPage = () => {
       confirmed = confirmations_given >= confirmations_required;
     }
 
-    console.log("Conffirmed", confirmed)
+    console.log("Confirmed", confirmed)
 
     setIsConfirmed(confirmed);
   };
