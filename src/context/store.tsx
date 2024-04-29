@@ -39,9 +39,8 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
                     chainId: 11155111n, // Converted CHAIN_ID to a bigint
                     
                 });
-                
-                console.log(safeApiKit)
                 const _safe = await Safe.create({ ethAdapter, safeAddress: multiSigAddress })
+
 
 
                 setClientSigner(injectedSigner);

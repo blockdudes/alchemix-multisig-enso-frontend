@@ -1,4 +1,3 @@
-
 // import { useActiveWalletConnectionStatus } from "thirdweb/react";
 // import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -6,8 +5,8 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Transaction } from "./pages/Transaction";
 import { MainPage } from "./pages/MainPage";
-// import { ProtectedRoute } from "./providers/ProtectedRoute";
-// import GlobalStateProvider from "./context/store";
+import { ProtectedRoute } from "./providers/ProtectedRoute";
+import GlobalStateProvider from "./context/store";
 
 interface BaseMetadata {
   key: string;
@@ -64,7 +63,6 @@ const RedirectToDashboard = () => {
 
 
 const App = () => {
-
   return (
     <>
       <BrowserRouter>

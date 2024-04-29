@@ -25,6 +25,7 @@ interface DesiredOutputCardProps {
 const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) => {
 
   const [totalUsed, setTotalUsed] = useState(0);
+
   const [data, setData] = useState([
     { token: 'USDC', balance: 0, selected: false },
     // { token: 'Btc in unisat', balance: 0, selected: false },
@@ -67,41 +68,6 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
     setData(newData);
     updateTotalUsed();
 };
-
-// const toggleSelected = (index: number) => {
-//   const newData = [...data];
-//   const isSelectedNow = !newData[index].selected;
-
-  
-//   newData[index].selected = isSelectedNow;
-//   console.log(`Toggling selection for item at index ${index}. Currently selected: ${newData[index].selected}`);
-//   if (isSelectedNow) {
-    
-//     // Calculate the new percentage if this token is now selected
-//     const selectedItemsCount = newData.filter(item => item.selected).length;
-//     const newPercentage = 100 / selectedItemsCount;
-//     console.log(`Selecting item at index ${index}. New percentage: ${newPercentage}`);
-//       newData.forEach((item, idx) => {
-//           if (item.selected) {
-//               item.balance = (newPercentage / 100) * (totalBalance || 1);
-//               console.log(`Updated balance for item at index ${idx}: ${item.balance}`);
-//           }
-//       });
-//   } else {
-//       // Redistribute the balance among the remaining selected items
-//       const selectedItems = newData.filter(item => item.selected);
-//       const newPercentage = selectedItems.length > 0 ? 100 / selectedItems.length : 0;
-//       console.log(`Deselecting item at index ${index}. New percentage for remaining items: ${newPercentage}`);
-
-//       selectedItems.forEach(item => {
-//           item.balance = (newPercentage / 100) * (totalBalance || 1);
-//           console.log(`Updated balance for remaining selected item: ${item.balance}`);
-//       });
-//   }
-
-//   setData(newData);
-//   updateTotalUsed();
-// };
 
 
 
@@ -182,7 +148,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
             {/* <CardDescription className="w-full text-right ">
             Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
             </CardDescription> */}
-            <Button className="w-[150px] w-full cursor-auto pointer-events-none" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
+            <Button className="w-full cursor-auto pointer-events-none" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
           </CardFooter>
 
         </Card>

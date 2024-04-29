@@ -39,6 +39,8 @@ export const sendTransaction = async (transaction: any) => {
 // };
 
 export const getTheOwners = async () => {
+
+
   const contractAddress: string = "0x9e2b6378ee8ad2A4A95Fe481d63CAba8FB0EBBF9";
   const contractABI: any[] = [
     { inputs: [], stateMutability: "nonpayable", type: "constructor" },

@@ -5,7 +5,7 @@ import { OperationType, SafeMultisigTransactionResponse } from "@safe-global/saf
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
 import { ethers, Interface, Result, Transaction } from "ethers"
 import SafeApiKit, { SafeMultisigTransactionListResponse } from '@safe-global/api-kit';
-import { multiSigAddress, RPC_URL, SAFE_API_URL, SAFE_TRANSACTION_ORIGIN } from "@/lib/constants";
+import { multiSigAddress, RPC_URL, SAFE_API_URL, SAFE_TRANSACTION_ORIGIN, SEPOLIA_RPC_URL } from "@/lib/constants";
 import { dummyData } from "@/dummydata";
 
 
@@ -45,6 +45,7 @@ interface AssetChanges {
     amount: number;
     rawAmount: bigint;
     symbol: string;
+    dollarValue: number
   };
 }
 interface EnsoRouteAction extends EnsoAction {
@@ -117,19 +118,21 @@ export const usdcSwapData = (
     const usdcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
     const output: EnsoAction[] = [];
     for (const [token, changes] of Object.entries(assetChanges)) {
-      const amount = (changes.rawAmount / BigInt(10000000)).toString(); // todo: change this divide only used because enso route function is failing
+      const amount = (changes.rawAmount).toString(); // todo: change this divide only used because enso route function is failing
       // use token address and amount to create the ensorouteaction
       const approveToken = approveTokenData(token, ensoWalletAddress, amount);
       output.push(approveToken);
-      output.push({
-        protocol: "enso",
-        action: "route",
-        args: {
-          tokenIn: token,
-          tokenOut: usdcAddress,
-          amountIn: amount,
-        },
-      });
+      if (token != "0xd533a949740bb3306d119cc777fa900ba034cd52") {
+        output.push({
+          protocol: "enso",
+          action: "route",
+          args: {
+            tokenIn: token,
+            tokenOut: usdcAddress,
+            amountIn: amount,
+          },
+        });
+      }
     }
     return output
   } catch (error) {
@@ -168,7 +171,8 @@ const updateAssetChanges = (
   tokenAddr: string,
   amount: number,
   rawAmount: bigint,
-  symbol: string
+  symbol: string,
+  dollarValue: number
 ): Record<string, AssetChanges> => {
   try {
     if (!assetChanges[userAddress]) {
@@ -178,11 +182,13 @@ const updateAssetChanges = (
       assetChanges[userAddress][tokenAddr] = {
         amount: 0,
         rawAmount: BigInt(0),
-        symbol: symbol
+        symbol: symbol,
+        dollarValue: 0
       };
     }
     assetChanges[userAddress][tokenAddr].amount += amount;
     assetChanges[userAddress][tokenAddr].rawAmount += rawAmount;
+    assetChanges[userAddress][tokenAddr].dollarValue += dollarValue;
 
     return assetChanges;
   } catch (error) {
@@ -275,7 +281,7 @@ export const buildClaimAndSwapTx = async (
 
     // [...claimRewardEnsoData, ...swapData],
     const ensoClaimAndSwapTxData = await ensoBuildTx(
-      [...claimRewardEnsoData],
+      [...claimRewardEnsoData,...swapData],
       safeAddress,
       chainId
     );
@@ -293,7 +299,7 @@ export const buildClaimAndSwapTx = async (
       simulateEnsoClaimAndSwapTxData
     );
 
-    const multisigAssetChanges = assetChanges[multiSigAddress];
+    const multisigAssetChanges = assetChanges[safeAddress];
 
     const outputTx = {
       data: ensoClaimAndSwapTxData.tx.data,
@@ -373,6 +379,7 @@ const safeTxDataFromEnsoTx = async (
 
     return safeTxData;
   } catch (error) {
+    console.log(error)
     throw new Error("Error creating safe transaction");
   }
 
@@ -414,6 +421,8 @@ export const simulateTx = async (
     return response.data;
 
   } catch (error) {
+    console.log(safeAddress)
+    console.log(error)
     throw new Error("Error simulating transaction");
   }
 
@@ -512,6 +521,7 @@ const processAssetChanges = (
     tokenAddr = ethAddress;
   }
   const amount = Number(changes.amount);
+  const dollarValue = Number(changes.dollar_value);
   const rawAmount = BigInt(changes.raw_amount);
   const toAddress = changes.to;
   const fromAddress = changes.from;
@@ -524,7 +534,8 @@ const processAssetChanges = (
       tokenAddr,
       amount,
       rawAmount,
-      symbol
+      symbol,
+      dollarValue
     );
   }
 
@@ -535,7 +546,8 @@ const processAssetChanges = (
       tokenAddr,
       -amount,
       -rawAmount,
-      symbol
+      symbol,
+      dollarValue
     );
   }
 
@@ -616,10 +628,10 @@ export interface PendingTxData {
   pending?: SafeMultisigTransactionResponse;
   rejected?: SafeMultisigTransactionResponse;
 }
-export const getPendingTransactionOld =
+export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     try {
-      const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
 
       const safeApiKit = new SafeApiKit({
         chainId: (await ethersProvider.getNetwork()).chainId,
@@ -697,12 +709,12 @@ export const getPendingTransactionOld =
 
   };
 
-export const getPendingTransaction =
+export const getPendingTransactionTs =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 
 
     // Wait for the Promise to resolve, but do nothing with the result
     await new Promise((resolve) => resolve(null));
-    return dummyData
+    return null
   }

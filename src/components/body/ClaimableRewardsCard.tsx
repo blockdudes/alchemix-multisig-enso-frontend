@@ -17,14 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from 'react';
+import { Assets } from "@/Types";
 
-interface Assets {
-  id: number;
-  tokenName: string;
-  amount: number;
-  tick: boolean;
-  dollarValue: number;
-}
 
 const calculateTotalValue = (assets: Assets[]) => {
   return assets.reduce((total: number, asset: Assets) => {
@@ -48,15 +42,6 @@ const ClaimableRewardsCard = ({ assets }: { assets: Assets[] }) => {
   const [items, setItems] = useState(assets);
   const [totalValue, setTotalValue] = useState(calculateTotalValue(assets));
 
-  // const handleSelect = (id: number) => {
-  //   console.log('handleSelect called');
-  //   setItems(items.map(item =>
-  //     item.id===id ? {...item, tick:!item.tick} : item
-  //     ));
-  //   setTotalValue(items.reduce((total, item) =>
-  //   item.id===id ? total + (item.tick ? -item.amount:item.amount): total,totalValue
-  //   ));
-  // };
 
   return (
     <>
@@ -97,7 +82,7 @@ const ClaimableRewardsCard = ({ assets }: { assets: Assets[] }) => {
             </Table>
           </CardContent>
           <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
-            <Button className="w-[150px] w-full cursor-auto pointer-events-none">
+            <Button className=" w-full cursor-auto pointer-events-none">
               Total Value:{" "}
               <span className="ml-5">${(totalValue ?? 0).toFixed(2)}</span>
             </Button>

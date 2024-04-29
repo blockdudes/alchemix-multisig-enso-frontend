@@ -16,21 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "../ui/checkbox";
+import { TokenData, Assets } from "@/Types";
 
-interface Assets {
-  id: number;
-  tokenName: string;
-  amount: number;
-  tick: boolean;
-  dollarValue: number;
-}
-
-interface TokenData {
-  token: string;
-  balance: number;
-  selected: boolean;
-  dollarValue: number;
-}
 
 const ReadOnlyRewardsCard = ({ assets }: any) => {
   // Default totalValue for demonstration
@@ -61,13 +48,6 @@ const ReadOnlyRewardsCard = ({ assets }: any) => {
               <TableBody>
                 {assets.map((asset: Assets, index: number) => (
                   <TableRow key={index}>
-                    {/* <TableCell className="font-medium">
-                                            <Checkbox
-                                                id={`asset-${index}`}
-                                                checked={asset.tick}
-                                                disabled
-                                            />
-                                        </TableCell> */}
                     <TableCell className="font-medium text-center">{asset.tokenName}</TableCell>
                     <TableCell className="text-center">{asset.amount.toFixed(2)}</TableCell>
                     <TableCell className="text-center">${asset.dollarValue.toFixed(2)}</TableCell>
@@ -77,8 +57,8 @@ const ReadOnlyRewardsCard = ({ assets }: any) => {
             </Table>
           </CardContent>
           <CardFooter className="flex justify-center align-bottom">
-            <Button className="w-[150px] w-full cursor-auto pointer-events-none">
-              Total Value: <span className="ml-5">{totalValue.toFixed(2)}</span>
+            <Button className="w-full cursor-auto pointer-events-none">
+              Total Value: <span className="ml-5">${totalValue.toFixed(2)}</span>
             </Button>
           </CardFooter>
         </Card>
