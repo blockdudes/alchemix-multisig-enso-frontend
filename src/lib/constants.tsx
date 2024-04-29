@@ -17,6 +17,11 @@ export const multiSigAddress: string = "0x3Fb4351Aab445163B3B086a8Be1367066D377c
 export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
 
+export const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+export const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
+export const FXS_ADDRESS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
+
+export const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
 
 const SEPOLIA_CHAIN_ID: string ="11155111";
 const ETHEREUM_CHAIN_ID: string ="1";

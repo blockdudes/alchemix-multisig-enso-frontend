@@ -132,7 +132,10 @@ export const MainPage = () => {
     } catch (error) {
       console.log(error);
       toast({
-        title: error as string,
+        variant: "default",
+        className: "bg-red-500 text-white",
+        title: "Uh oh! Something went wrong.",
+        description: (error as Error).message,
       });
       throw new Error("Error in confirming transaction");
     }
@@ -220,7 +223,10 @@ export const MainPage = () => {
     } catch (error) {
       console.log(error);
       toast({
-        title: error as string,
+        variant: "default",
+        className: "bg-red-500 text-white",
+        title: "Uh oh! Something went wrong.",
+        description: (error as Error).message,
       });
       throw error;
     }
@@ -334,6 +340,7 @@ export const MainPage = () => {
   };
 
   const transformTransactionDataClaimAsset = (transactionData: any) => {
+
     const assets = [
       { id: 1, tokenName: "CRV", address: CRV_ADDRESS },
       { id: 2, tokenName: "CVX", address: CVX_ADDRESS },
@@ -349,6 +356,7 @@ export const MainPage = () => {
         amount: assetData ? assetData.amount : 0,
         tick: !!assetData,
         dollarValue: assetData ? assetData.dollarValue : 0,
+        // tokenName: assetData ? assetData.tokenName : "",
       };
     });
   };
@@ -483,11 +491,14 @@ export const MainPage = () => {
         console.log("outputtx", outputTx);
         setTransactionData(outputTx);
       } catch (error) {
-        console.log(error);
+
         toast({
-          title: error as string,
+          variant: "default",
+          className: "bg-red-500 text-white",
+          title: "Uh oh! Something went wrong.",
+          description: (error as Error).message,
         });
-        throw new Error("Error in fetching data");
+        // throw new Error("Error in fetching data");
       }
     } else {
       try {
@@ -512,7 +523,7 @@ export const MainPage = () => {
     checkIfConfirmed();
   }, []);
 
-  console.log(transactionData);
+
   const sumClaimAndSwapAmount = transactionData
     ? Object.values(transactionData.assetChanges.claimAndSwap).reduce(
         (sum, current: any) => sum + current.amount,
