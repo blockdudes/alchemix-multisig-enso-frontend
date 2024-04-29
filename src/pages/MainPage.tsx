@@ -100,19 +100,20 @@ export const MainPage = () => {
   const [isRejectButtonLoading, setIsRejectButtonLoading] = useState(false);
 
   // error codes
-  let error_title = "Unknown Error";
-  let error_description = ""; 
-  const [fetchDataError, setFetchDataError] = useState(null);
+  // let error_title = "Unknown Error";
+  // let error_description = ""; 
+  const [fetchDataError, setFetchDataError] = useState("");
 
-  const testAddress: String = "0x37A1FB984316c971Fec44c1B8e49BE93d382d4B3";
-  
+  const testOwner1: String = "0x37A1FB984316c971Fec44c1B8e49BE93d382d4B3";
+  const testOwner2: String = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+
   useEffect(() => {
     try {
       safe
         .getOwners()
         .then((data) => {
           console.log(data);
-          setAuthorizedUsers([...data, testAddress.toLowerCase()]);
+          setAuthorizedUsers([...data, testOwner1.toLowerCase(), testOwner2.toLowerCase()]);
         })
         .catch((error) => console.error("Error:", error));
 
@@ -137,6 +138,12 @@ export const MainPage = () => {
       const executeTransaction = await safe.executeTransaction(safeTransaction);
       const receipt = await executeTransaction.transactionResponse?.wait();
       console.log(receipt);
+      toast({
+        variant: "default",
+        className: "bg-green-500 text-white",
+        title: "Success!",
+        description: "Transaction Successfully Executed",
+      });
     } catch (error) {
       console.log(error);
       toast({
@@ -235,6 +242,9 @@ export const MainPage = () => {
             senderSignature: senderSignature.data,
             origin: SAFE_TRANSACTION_ORIGIN,
           });
+
+          // reload page after swap successfull
+          window.location.reload();
         } else {
           await safeApiKit.confirmTransaction(safeTxHash, senderSignature.data);
         }
@@ -527,6 +537,7 @@ export const MainPage = () => {
           description: (error as Error).message,
         });
         // throw new Error("Error in fetching data");
+        setFetchDataError("Error fetching Data!");
       }
     } else {
       try {
@@ -608,7 +619,7 @@ export const MainPage = () => {
 
   //   fetchData();
   // }, []);
-  if (fetchDataError!==null) {
+  if (fetchDataError!=="") {
     return (
       <>
       <div className="flex flex-col items-center">
@@ -638,12 +649,12 @@ export const MainPage = () => {
             // true ? (
               <>
                 {
-                  true ? (
-                  // transactionData != null ? (
+                  // true ? (
+                  transactionData != null ? (
                     <>
                       {
-                        // pendingTransactions != null ? (
-                        false ? (
+                        pendingTransactions != null ? (
+                        // false ? (
                         <>
                           <div className="flex flex-row gap-10 items-start justify-center px-4">
                             <ReadOnlyRewardsCard

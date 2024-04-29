@@ -10,8 +10,10 @@ export const RPC_URL: string = ETH_RPC_URL
 export const SAFE_API_URL : string = "http://192.168.1.4:8000/api";
 
 // export const multiSigAddress: string = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9";
-export const multiSigAddress: string = "0x3Fb4351Aab445163B3B086a8Be1367066D377cA7";
-// export const multiSigAddress: string = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
+// export const multiSigAddress: string = "0x3Fb4351Aab445163B3B086a8Be1367066D377cA7";
+// export const multiSigAddress: string = "0x4Eb970e39A60189d860604F565145257ebFB8825";
+export const multiSigAddress: string = "0x42Fa21Fb2a98039477cf89cef879d6943ea6E5BA";
+
 
 // export const OWNER1_ADDRESS: string ="0x5788F90196954A272347aEe78c3b3F86F548D0a9";
 export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
