@@ -13,8 +13,8 @@ export const SAFE_API_URL : string = "http://192.168.1.4:8000/api";
 export const multiSigAddress: string = "0x3Fb4351Aab445163B3B086a8Be1367066D377cA7";
 // export const multiSigAddress: string = "0xab850A24A158Db25a75376fDaa19ef1717cA5F88";
 
-// export const OWNER1_ADDRESS: string ="0x5788F90196954A272347aEe78c3b3F86F548D0a9";
-export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+export const OWNER1_ADDRESS: string ="0x5788F90196954A272347aEe78c3b3F86F548D0a9";
+// export const OWNER1_ADDRESS: string ="0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
 
 export const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";

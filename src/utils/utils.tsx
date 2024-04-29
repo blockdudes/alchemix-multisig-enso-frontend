@@ -205,8 +205,8 @@ export const convertSimulationToAssetChanges = async (
     console.log(assetChangesSimulation)
     let assetChanges: Record<string, AssetChanges> = {};
 
+    console.log(assetChangesSimulation)
     for (const changes of assetChangesSimulation) {
-
 
       assetChanges = processAssetChanges(
         assetChanges,
@@ -628,7 +628,7 @@ export interface PendingTxData {
   pending?: SafeMultisigTransactionResponse;
   rejected?: SafeMultisigTransactionResponse;
 }
-export const getPendingTransaction =
+export const getPendingTransactionold =
   async (): Promise<PendingTxData | null> => {
     try {
       const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
@@ -709,7 +709,7 @@ export const getPendingTransaction =
 
   };
 
-export const getPendingTransactionTs =
+export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 

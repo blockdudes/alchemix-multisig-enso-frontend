@@ -5,6 +5,7 @@ import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, SAFE_API_URL, multiSigAddress } from "@/lib/constants";
 import SafeApiKit from "@safe-global/api-kit";
 import { SafeMultisigTransactionResponse } from "@safe-global/safe-core-sdk-types";
+import { TokenData } from "@/Types";
 
 export const appState = createContext<any>(null);
 
@@ -17,8 +18,11 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const [ethAdapter, setEthAdapter] = useState<EthersAdapter | null>(null);
     const [safe, setSafe] = useState<Safe | null>(null);
     const [safeApiKit, setSafeApiKit] = useState<SafeApiKit | null>(null);
-
-
+    const dummyData = [
+        { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
+        // { token: 'Btc in unisat', balance: 0, selected: false,dollarValue: 0 },
+    ]
+    const [desiredoutput, setDesiredOutput] = useState<TokenData[]>(dummyData)
 
 
     useEffect(() => {
@@ -60,7 +64,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     return (
-        <appState.Provider value={{ safeApiKit, clientSigner, rpcSigner, ethAdapter, safe }}>
+        <appState.Provider value={{ safeApiKit, clientSigner, rpcSigner, ethAdapter, safe, desiredoutput, setDesiredOutput }}>
             {children}
         </appState.Provider>
     )

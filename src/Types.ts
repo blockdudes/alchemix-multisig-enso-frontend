@@ -40,3 +40,8 @@ export interface Assets {
   dollarValue: number;
 
 }
+
+
+export interface DesiredOutputCardProps {
+  totalBalance?: number;
+}

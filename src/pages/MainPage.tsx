@@ -76,11 +76,13 @@ export const MainPage = () => {
     safeApiKit,
     ethAdapter,
     safe,
+    desiredoutput
   }: {
     clientSigner: JsonRpcSigner;
     safeApiKit: SafeApiKit;
     ethAdapter: EthersAdapter;
     safe: Safe;
+    desiredoutput: TokenData[]
   } = useEthereum();
   const activeAccount = useActiveAccount();
 
@@ -90,7 +92,11 @@ export const MainPage = () => {
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
   const [isRejectButtonLoading, setIsRejectButtonLoading] = useState(false);
+  const [isSwapButtonLoading, setIsSwapButtonLoading] = useState(false);
+  const [isSignButtonLoading, setIsSignButtonLoading] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+
+
 
   const { toast } = useToast();
 
@@ -115,7 +121,7 @@ export const MainPage = () => {
     }
   }, [safe]);
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
   const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
@@ -147,6 +153,30 @@ export const MainPage = () => {
     isNewTx: boolean = false
   ) => {
     try {
+      if (!isRejected && pendingTransactions) {
+        setIsSignButtonLoading(true);
+        console.log("1")
+      }
+      else if (!isRejected && pendingTxData === undefined && isNewTx) {
+        setIsSwapButtonLoading(true);
+
+        const selected = desiredoutput.some(item => item.selected)
+        if (!selected) {
+          toast({
+            variant: "default",
+            className: "bg-red-500 text-white",
+            title: "At least one item must be selected.",
+          });
+          throw new Error("Please select a desired output")
+        }
+      }
+      else if (isRejected) {
+            setIsRejectButtonLoading(true);
+      }
+      else {
+        throw new Error("Something went wrong with validation");
+      }
+
       let signTransaction:
         | SafeTransaction
         | SafeMultisigTransactionResponse
@@ -168,7 +198,10 @@ export const MainPage = () => {
           }
         }
       } else if (isNewTx && transactionData) {
+
+        console.log("enter fn")
         const nextNonce = await safeApiKit.getNextNonce(multiSigAddress);
+        console.log("enter fn", nextNonce)
 
         signTransaction = await safe.createTransaction({
           transactions: [
@@ -184,6 +217,9 @@ export const MainPage = () => {
           },
         });
         isProposed = false;
+
+        console.log(signTransaction)
+
       }
 
       if (signTransaction) {
@@ -203,6 +239,11 @@ export const MainPage = () => {
         });
         const senderSignature = await safe.signHash(safeTxHash);
 
+        senderSignature && toast({
+          variant: "default",
+          title: "Transaction successfully signed.",
+        });
+
         if (!isProposed) {
           let checksumMultiSigAddress = ethers.getAddress(multiSigAddress);
 
@@ -213,6 +254,11 @@ export const MainPage = () => {
             senderAddress: await clientSigner.getAddress(),
             senderSignature: senderSignature.data,
             origin: SAFE_TRANSACTION_ORIGIN,
+          });
+
+          toast({
+            variant: "default",
+            title: "Success! Proposal created.",
           });
         } else {
           await safeApiKit.confirmTransaction(safeTxHash, senderSignature.data);
@@ -240,104 +286,6 @@ export const MainPage = () => {
     setCheckExecutable(nonce === ourNonce);
   };
 
-  // for testing proposal
-  const handleProposeCheck = async () => {
-    try {
-      let Transaction: SafeTransaction | null =
-        (await safe.createTransaction({
-          transactions: [
-            {
-              to: "0x37A1FB984316c971Fec44c1B8e49BE93d382d4B3",
-              value: "0",
-              data: "0xa9059cbb00000000000000000000000037a1fb984316c971fec44c1b8e49be93d382d4b300000000000000000000000000000000000000000000000000470de4df820000",
-              operation: OperationType.Call, // required for security
-            },
-          ],
-        })) || null;
-
-      console.log(Transaction);
-      await safe.connect({
-        ethAdapter: ethAdapter,
-        safeAddress: multiSigAddress,
-      });
-
-      console.log(await clientSigner.getAddress());
-      if (Transaction) {
-        const safeTxHash = await safe.getTransactionHash(Transaction);
-
-        // Sign transaction to verify that the transaction is coming from owner 1
-        const senderSignature = await safe.signHash(safeTxHash);
-
-        let checksumMultiSigAddress = ethers.getAddress(multiSigAddress);
-
-        const proposeTX = await safeApiKit.proposeTransaction({
-          safeAddress: checksumMultiSigAddress,
-          safeTransactionData: Transaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
-          safeTxHash,
-          senderAddress: await clientSigner.getAddress(),
-          senderSignature: senderSignature.data,
-        });
-
-        console.log(proposeTX);
-      }
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  };
-
-  const handleSwap = async () => {
-    if (pendingTransactions.count > 0) {
-      throw new Error("There are pending transactions");
-    }
-
-    console.log(safe);
-
-    try {
-      let safeTransaction: SafeTransaction | null =
-        (transactionData &&
-          (await safe.createTransaction({
-            transactions: [
-              {
-                to: transactionData.to,
-                value: transactionData.value,
-                data: transactionData.data,
-                operation: OperationType.DelegateCall, // required for security
-              },
-            ],
-          }))) ||
-        null;
-
-      await safe.connect({
-        ethAdapter: ethAdapter,
-        safeAddress: multiSigAddress,
-      });
-
-      if (safeTransaction) {
-        const safeTxHash = await safe.getTransactionHash(safeTransaction);
-
-        const senderSignature = await safe.signHash(safeTxHash);
-
-        // safeTransaction.addSignature(ownerSig);
-
-        let checksumMultiSigAddress = ethers.getAddress(multiSigAddress);
-
-        const proposeTX = await safeApiKit.proposeTransaction({
-          safeAddress: checksumMultiSigAddress,
-          safeTransactionData: safeTransaction.data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
-          safeTxHash,
-          senderAddress: await clientSigner.getAddress(),
-          senderSignature: senderSignature.data,
-          origin: SAFE_TRANSACTION_ORIGIN,
-        });
-
-        console.log(proposeTX);
-      }
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  };
 
   const transformTransactionDataClaimAsset = (transactionData: any) => {
 
@@ -384,13 +332,6 @@ export const MainPage = () => {
     const sortedData = outputTransformedData.sort(
       (prev, next) => next.dollarValue - prev.dollarValue
     );
-    // const dummyData: TokenData[] = [
-    //   {
-    //     token: 'usdc',
-    //     balance: (typeof claimAndSwapTotal === 'number' ? claimAndSwapTotal : 0),
-    //     selected: true
-    //   },
-    // ];
 
     return sortedData;
   };
@@ -418,7 +359,7 @@ export const MainPage = () => {
   const checkIfRejected = () => {
     // console.log(pendingTransactions, typeof(pendingTransactions));
     const txnData = pendingTransactions?.rejected;
-    console.log( "trexx",txnData, typeof(txnData));
+    console.log("trexx", txnData, typeof (txnData));
     let hasRejected: boolean = false;
     if (txnData) {
       const user = activeAccount?.address.toLowerCase();
@@ -429,7 +370,7 @@ export const MainPage = () => {
         }
       }
     }
-   
+
 
     console.log("rejected", hasRejected);
     return hasRejected;
@@ -457,8 +398,8 @@ export const MainPage = () => {
 
     if (pendingTX) {
       try {
-        const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
-        const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
+        // const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
+        // const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
         const txData = {
           chainId: CHAIN_ID,
           data: pendingTX?.pending?.data,
@@ -512,7 +453,7 @@ export const MainPage = () => {
         console.log(`ress`, result);
         setTransactionData(result);
       } catch (error) {
-        console.log(error);
+        console.log(error)
         throw new Error("Error in fetching data");
       }
     }
@@ -526,9 +467,9 @@ export const MainPage = () => {
 
   const sumClaimAndSwapAmount = transactionData
     ? Object.values(transactionData.assetChanges.claimAndSwap).reduce(
-        (sum, current: any) => sum + current.amount,
-        0
-      )
+      (sum, current: any) => sum + current.amount,
+      0
+    )
     : 0;
 
   // const [metaData, setMetaData] = useState<{ [key: string]: MetadataItem[] }>({
@@ -702,7 +643,7 @@ export const MainPage = () => {
                                 handleSignTx(false, undefined, true)
                               }
                               label="Swap"
-                              // disabled={transactionQueue?.count > 0 || true}
+                            // disabled={transactionQueue?.count > 0 || true}
                             />
                           </div>
                         </>

@@ -10,37 +10,23 @@ import {
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from "react";
+import { DesiredOutputCardProps, TokenData } from "@/Types";
+import { useEthereum } from "@/context/store";
 
-
-interface TokenData {
-  token: string;
-  balance: number; // This will now store the percentage
-  selected: boolean;
-}
-
-interface DesiredOutputCardProps {
-  totalBalance?: number;
-}
 
 const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) => {
 
-  const [totalUsed, setTotalUsed] = useState(0);
+  const { desiredoutput, setDesiredOutput } = useEthereum();
 
-  const [data, setData] = useState([
-    { token: 'USDC', balance: 0, selected: false },
-    // { token: 'Btc in unisat', balance: 0, selected: false },
-    // { token: 'Eth in uniswap', balance: 0, selected: false },
-    // { token: 'Btc in unisat', balance: 0, selected: false },
-  ]);
 
   const updateTotalUsed = () => {
-    const total = data.reduce((prev, cur) => prev + cur.balance, 0);
-    setTotalUsed(total);
+    const total = desiredoutput.reduce((prev: number, cur: TokenData) => prev + cur.balance, 0);
+    // setTotalUsed(total);
   }
 
 
   const toggleSelected = (index: number) => {
-    const newData = [...data];
+    const newData = [...desiredoutput];
     const isSelectedNow = !newData[index].selected;
 
     newData[index].selected = isSelectedNow;
@@ -65,7 +51,7 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
         });
     }
 
-    setData(newData);
+    setDesiredOutput(newData);
     updateTotalUsed();
 };
 
@@ -73,7 +59,7 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
 
 
 const handleSliderChange = (index : number, newPercentage : number) => {
-  const newData = [...data];
+  const newData = [...desiredoutput];
   newData[index].balance = (newPercentage / 100) * (totalBalance || 1);
 
   const totalSelectedPercentage = newData.reduce((acc, item) => item.selected ? acc + (item.balance / (totalBalance || 1) * 100) : acc, 0);
@@ -86,7 +72,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
       });
   }
   console.log(newData)
-  setData(newData);};
+  setDesiredOutput(newData);};
 
 
 
@@ -111,7 +97,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                     <div className="table-cell">Amount($)</div>
                   </div>
                   <hr />
-                  {data.map((item, index) => {
+                  {desiredoutput.map((item:TokenData, index: number) => {
                     return (
                       <div key={index} className="flex justify-between items-center p-2 gap-4">
                         <div className="table-cell pt-4">
@@ -128,7 +114,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                             max={100}
                             min={1}
                             step={1}
-                            value={[data[index].balance / (totalBalance ?? 1) * 100]}
+                            value={[desiredoutput[index].balance / (totalBalance ?? 1) * 100]}
                             onValueChange={(newValue) => handleSliderChange(index, newValue[0])}
                             disabled={!item.selected}
                           />
@@ -148,7 +134,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
             {/* <CardDescription className="w-full text-right ">
             Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
             </CardDescription> */}
-            <Button className="w-full cursor-auto pointer-events-none" onClick={() => console.log(data)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
+            <Button className="w-full cursor-auto pointer-events-none" onClick={() => console.log(desiredoutput)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
           </CardFooter>
 
         </Card>
