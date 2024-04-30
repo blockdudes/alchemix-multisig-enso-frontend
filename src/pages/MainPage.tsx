@@ -47,6 +47,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ThreeDots } from "react-loader-spinner";
+import { ErrorCreateTxPage } from "./ErrorPage";
 
 import ErrorPage from "./ErrorPage";
 import { getTheOwners } from "@/utils/helper";
@@ -95,6 +96,10 @@ export const MainPage = () => {
   const [isSwapButtonLoading, setIsSwapButtonLoading] = useState(false);
   const [isSignButtonLoading, setIsSignButtonLoading] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isFetchedData, setIsFetchedData] = useState<boolean>(false);
+  const [isNewTransaction, setIsNewTransaction] = useState<boolean>(true);
+
+
 
 
 
@@ -153,28 +158,25 @@ export const MainPage = () => {
     isNewTx: boolean = false
   ) => {
     try {
-      if (!isRejected && pendingTransactions) {
-        setIsSignButtonLoading(true);
-        console.log("1")
-      }
-      else if (!isRejected && pendingTxData === undefined && isNewTx) {
-        setIsSwapButtonLoading(true);
-
-        const selected = desiredoutput.some(item => item.selected)
-        if (!selected) {
-          toast({
-            variant: "default",
-            className: "bg-red-500 text-white",
-            title: "At least one item must be selected.",
-          });
-          throw new Error("Please select a desired output")
+  
+      if (!isRejected && (pendingTransactions || isNewTx)) {
+        if (pendingTxData === undefined && isNewTx) {
+          if (!desiredoutput.some(item => item.selected)) {
+            toast({
+              variant: "default",
+              className: "bg-red-500 text-white",
+              title: "At least one item must be selected.",
+            });
+            throw new Error("Please select a desired output");
+          }
+          setIsSwapButtonLoading(true); // Starting the swap process
+        } else {
+          setIsSignButtonLoading(true); // Starting the sign process for existing pending transactions
         }
-      }
-      else if (isRejected) {
-            setIsRejectButtonLoading(true);
-      }
-      else {
-        throw new Error("Something went wrong with validation");
+      } else if (isRejected) {
+        setIsRejectButtonLoading(true); // Starting the reject process
+      } else {
+        throw new Error("Invalid transaction state.");
       }
 
       let signTransaction:
@@ -199,9 +201,10 @@ export const MainPage = () => {
         }
       } else if (isNewTx && transactionData) {
 
-        console.log("enter fn")
-        const nextNonce = await safeApiKit.getNextNonce(multiSigAddress);
-        console.log("enter fn", nextNonce)
+        // here
+        const nextNonce =  !isNewTransaction ? pendingTransactions.pending.nonce : await safeApiKit.getNextNonce(multiSigAddress);
+
+        console.log(nextNonce,pendingTransactions.pending.nonce, await safeApiKit.getNextNonce(multiSigAddress))
 
         signTransaction = await safe.createTransaction({
           transactions: [
@@ -217,8 +220,6 @@ export const MainPage = () => {
           },
         });
         isProposed = false;
-
-        console.log(signTransaction)
 
       }
 
@@ -375,7 +376,6 @@ export const MainPage = () => {
     console.log("rejected", hasRejected);
     return hasRejected;
   };
-  console.log(checkIfRejected());
 
   // check if completed required confirmations
   const checkIfConfirmed = () => {
@@ -393,13 +393,14 @@ export const MainPage = () => {
     setIsConfirmed(confirmed);
   };
   const fetchdata = async () => {
+    setIsFetchedData(true);
     const pendingTX = await getPendingTransaction();
     pendingTX && setPendingTransactions(pendingTX);
-
-    if (pendingTX) {
+   
+    if (pendingTX && isNewTransaction) {
       try {
-        // const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
-        // const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
+        const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
+        const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
         const txData = {
           chainId: CHAIN_ID,
           data: pendingTX?.pending?.data,
@@ -407,7 +408,6 @@ export const MainPage = () => {
           to: pendingTX?.pending?.to,
           value: pendingTX?.pending?.value,
         };
-
         let endSimulation: EndSimulation = await reSimulateTx(
           CHAIN_ID,
           txData,
@@ -432,14 +432,17 @@ export const MainPage = () => {
         console.log("outputtx", outputTx);
         setTransactionData(outputTx);
       } catch (error) {
-
         toast({
           variant: "default",
           className: "bg-red-500 text-white",
           title: "Uh oh! Something went wrong.",
           description: (error as Error).message,
         });
-        // throw new Error("Error in fetching data");
+
+        throw new Error("Error in fetching data");
+      }
+      finally {
+        setIsFetchedData(false);
       }
     } else {
       try {
@@ -454,7 +457,16 @@ export const MainPage = () => {
         setTransactionData(result);
       } catch (error) {
         console.log(error)
+        toast({
+          variant: "default",
+          className: "bg-red-500 text-white",
+          title: "Uh oh! Something went wrong.",
+          description: (error as Error).message,
+        });
         throw new Error("Error in fetching data");
+      }
+      finally {
+        setIsFetchedData(false);
       }
     }
   };
@@ -462,7 +474,7 @@ export const MainPage = () => {
   useEffect(() => {
     fetchdata();
     checkIfConfirmed();
-  }, []);
+  }, [isNewTransaction]);
 
 
   const sumClaimAndSwapAmount = transactionData
@@ -472,54 +484,7 @@ export const MainPage = () => {
     )
     : 0;
 
-  // const [metaData, setMetaData] = useState<{ [key: string]: MetadataItem[] }>({
-  //   group1: [
-  //     { key: "ALCX bribed since last claim", value: "4000 ALCX" },
-  //     { key: "ALCX buyback target", value: "2000 ALCX" },
-  //   ],
-  //   group2: [
-  //     { key: "Treasury stablecoin + ETH Balance", value: "4000 ALCX" },
-  //     {
-  //       key: ":",
-  //       subValues: [
-  //         { label: "Target Balance", value: "1.5M" },
-  //         { label: "Funding Target", value: "35k" }
-  //       ]
-  //     }
-  //   ],
-  // });
-
-  // Simulate data fetching and updating
-  // useEffect(() => {
-  //   const data = {
-  //     "group1": [
-  //       { "key": "ALCX bribed since last claim", "value": "4500 ALCX" },
-  //       { "key": "ALCX buyback target", "value": "2500 ALCX" }
-  //     ],
-  //     "group2": [
-  //       { "key": "Treasury stablecoin + ETH Balance", "value": "5000 ALCX" },
-  //       { "key": ":", "value": "Target Balance: 1.6M, Funding Target: 40k" }
-  //     ]
-  //   }
-
-  //   const fetchData = async () => {
-  //     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating delay
-  //     setMetaData({
-  //       group1: data.group1.map(item => ({ key: item.key, value: item.value })),
-  //       group2: data.group2.map(item => {
-  //         // Check if the item has sub-values or a single value
-  //         if (item.key === ":") {
-  //           // Assuming the API sends the values as a single string
-  //           return { key: item.key, value: item.value };
-  //         } else {
-  //           return { key: item.key, value: item.value };
-  //         }
-  //       })
-  //     });
-  //   };
-
-  //   fetchData();
-  // }, []);
+    console.log("enter",transactionData != null , !isNewTransaction)
 
   return (
     <>
@@ -532,9 +497,9 @@ export const MainPage = () => {
               <>
                 {
                   // true ? (
-                  transactionData != null ? (
+                  (transactionData != null )? (
                     <>
-                      {pendingTransactions != null ? (
+                      {(pendingTransactions != null && isNewTransaction) ? (
                         // false ? (
                         <>
                           <div className="flex flex-row gap-10 items-start justify-center px-4">
@@ -557,9 +522,6 @@ export const MainPage = () => {
                                     handleSignTx(false, pendingTransactions)
                                   }
                                   hide={checkIfSigned()}
-                                  // onClick={() =>
-                                  //   handleSignTx(false, pendingTransactions)
-                                  // }
                                   label="Sign"
                                 />
                                 <Button
@@ -614,17 +576,17 @@ export const MainPage = () => {
                         <>
                           <div className="flex flex-col ">
                             {/* <div className="flex flex-row gap-10 items-center justify-center ">
-                        {Object.entries(metaData).map(([groupName, items], index) => (
-                          <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-                            {items.map((item, itemIndex) => (
-                              <MetadataCard
-                                key={itemIndex}
-                                text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
-                              />
-                            ))}
-                          </div>
-                        ))}
-                      </div> */}
+                          {Object.entries(metaData).map(([groupName, items], index) => (
+                            <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
+                              {items.map((item, itemIndex) => (
+                                <MetadataCard
+                                  key={itemIndex}
+                                  text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div> */}
                             <div className="flex flex-row gap-10 items-start justify-center px-4">
                               <ClaimableRewardsCard
                                 assets={transformTransactionDataClaimAsset(
@@ -644,22 +606,33 @@ export const MainPage = () => {
                               }
                               label="Swap"
                             // disabled={transactionQueue?.count > 0 || true}
+
                             />
                           </div>
                         </>
                       )}
                     </>
                   ) : (
-                    <>
+                    isFetchedData ? (
                       <div>
                         <Loader />
                       </div>
+                    ) : <>
+                      <ErrorCreateTxPage
+                        errorTitle={"401: Unauthorized Access"}
+                        errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+                        setter={setIsNewTransaction}
+                        loader={setIsFetchedData}
+                      />
                     </>
                   )
                 }
               </>
             ) : (
-              <ErrorPage />
+              <ErrorPage
+                errorTitle={"401: Unauthorized Access"}
+                errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+              />
             )
           }
         </>

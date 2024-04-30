@@ -241,7 +241,7 @@ export const buildClaimAndSwapTx = async (
 ): Promise<EnsoTx> => {
 
   try {
-
+  console.log("build and simulate")
     const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
 
     const claimRewardEnsoData = claimRewardData();
@@ -628,7 +628,7 @@ export interface PendingTxData {
   pending?: SafeMultisigTransactionResponse;
   rejected?: SafeMultisigTransactionResponse;
 }
-export const getPendingTransactionold =
+export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     try {
       const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
@@ -709,7 +709,7 @@ export const getPendingTransactionold =
 
   };
 
-export const getPendingTransaction =
+export const getPendingTransaction_null =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 
