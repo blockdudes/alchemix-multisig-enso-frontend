@@ -28,7 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useEffect, useState } from "react";
 import PremiumButton from "@/components/ui/PremiumButton";
 import { Button } from "@/components/ui/button";
-import ReadOnlyRewardsCard from "@/components/ui/ReadonlyRewardCard";
+import ReadOnlyRewardsCard from "@/components/ui/ClaimableRewardsCard";
 import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard";
 import { useActiveWalletConnectionStatus, useIsAutoConnecting } from "thirdweb/react";
 import { buildClaimAndSwapTx, getAllTransations, getPendingTransaction } from "@/utils/utils";

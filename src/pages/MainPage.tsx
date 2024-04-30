@@ -1,44 +1,28 @@
 import AuthenticationPage from "@/components/body/AuthenticationPage";
-import ClaimableRewardsCard from "@/components/body/ClaimableRewardsCard";
-import DesiredOutputCard from "@/components/body/DesiredOutputCard";
+// import DesiredOutputCard from "@/components/body/DesiredOutputCard";
+import DesiredOutputCard from "@/components/ui/DesiredOutputCard";
 import Navbar from "@/components/header/Navbar";
 import PremiumButton from "@/components/ui/PremiumButton";
 import {
-  EndSimulation,
-  PendingTxData,
-  buildClaimAndSwapTx,
-  convertSimulationToAssetChanges,
-  getEnsoWalletAddress,
-  getPendingTransaction,
-  reSimulateTx,
-  simulateTx,
-  usdcSwapData,
+  checkIfConfirmed,
+  checkIfRejected,
+  checkIfSigned,
+  transformTransactionDataClaimAndSwapAsset,
+  transformTransactionDataClaimAsset,
 } from "@/utils/utils";
-import Safe, { EthersAdapter, SigningMethod } from "@safe-global/protocol-kit";
-import {
-  OperationType,
-  SafeMultisigTransactionResponse,
-  SafeTransaction,
-  SafeTransactionData,
-} from "@safe-global/safe-core-sdk-types";
-import { JsonRpcSigner, ethers } from "ethers";
+import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
+import { JsonRpcSigner } from "ethers";
 import { useEffect, useState } from "react";
 import {
   useActiveAccount,
+  useActiveWalletChain,
   useActiveWalletConnectionStatus,
 } from "thirdweb/react";
-import ReadOnlyRewardsCard from "@/components/ui/ReadonlyRewardCard";
+import ClaimableRewardsCard from "@/components/ui/ClaimableRewardsCard";
 import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard";
-import {
-  CHAIN_ID,
-  OWNER1_ADDRESS,
-  SAFE_OWNER,
-  SAFE_TRANSACTION_ORIGIN,
-  multiSigAddress,
-} from "@/lib/constants";
 import anvil from "@/utils/anvil";
 import { useEthereum } from "@/context/store";
-import SafeApiKit, { SignatureResponse } from "@safe-global/api-kit";
+import SafeApiKit from "@safe-global/api-kit";
 import Loader from "@/components/ui/Loader";
 import {
   Tooltip,
@@ -50,26 +34,12 @@ import { ThreeDots } from "react-loader-spinner";
 import { ErrorCreateTxPage } from "./ErrorPage";
 
 import ErrorPage from "./ErrorPage";
-import { getTheOwners } from "@/utils/helper";
 import { Button } from "@/components/ui/button";
-import { TokenData } from "@/Types";
+import {  PendingTxData, TokenData } from "@/Types";
 import { useToast } from "@/components/ui/use-toast";
+import ChainAlert from "@/components/ui/Alert";
 
-// const AUTHORIZED_USERS = [
-//   "0x5788f90196954a272347aee78c3b3f86f548d0a9",
-//   "0xf920f2688719012b587afbdec27ec5029c18e875",
-//   "0xb9f256128aef64459ce9558826f6466bc010b687",
-//   "0xf872703f1c8f93fa186869bac83bac5a0c87c3c8",
-//   "0xffaa3cda4f169d33291dd9ddbea8578d1398430e",
-//   "0xacd8b7e9ac7a0900cb57007000302b3234e33a36",
-//   // my address for testing
-//   "0x37a1fb984316c971fec44c1b8e49be93d382d4b3",
-// ];
 
-const getOwners = async () => {
-  const owners = await getTheOwners();
-  return owners;
-};
 
 export const MainPage = () => {
   const {
@@ -77,43 +47,61 @@ export const MainPage = () => {
     safeApiKit,
     ethAdapter,
     safe,
-    desiredoutput
+    desiredoutput,
+    transactionData, setTransactionData, pendingTransactions, setPendingTransactions, isFetchedData, setIsFetchedData,
+    fetchdata,isNewTransaction, setIsNewTransaction, handleConfirmTX,
+    loadingState, setButtonLoading , handleSignTx
   }: {
     clientSigner: JsonRpcSigner;
     safeApiKit: SafeApiKit;
     ethAdapter: EthersAdapter;
     safe: Safe;
-    desiredoutput: TokenData[]
+    desiredoutput: TokenData[];
+    transactionData: any
+    setTransactionData: any;
+    pendingTransactions: PendingTxData;
+    setPendingTransactions: React.Dispatch<React.SetStateAction<PendingTxData>>;
+    isFetchedData: boolean;
+    setIsFetchedData: React.Dispatch<React.SetStateAction<boolean>>;
+    fetchdata: () => Promise<void>;
+    isNewTransaction: boolean;
+    setIsNewTransaction: React.Dispatch<React.SetStateAction<boolean>>;
+    handleConfirmTX: (safeTxHash: string) => Promise<void>;
+    loadingState: {
+      swap: boolean;
+      sign: boolean;
+      reject: boolean;
+    };
+    setButtonLoading: (type: string, isLoading: boolean) => void;
+    handleSignTx: (isRejected: boolean, pendingTxData?: PendingTxData, isNewTx?: boolean ) => Promise<void>;
   } = useEthereum();
   const activeAccount = useActiveAccount();
 
-  const [transactionData, setTransactionData] = useState<any>(null);
-  const [pendingTransactions, setPendingTransactions] = useState<any>(null);
+
+  const [ isAuthorizedUser, setIsAuthorizedUser ] = useState<boolean>(false);
   const [checkExecutable, setCheckExecutable] = useState<boolean>(false);
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
-  const [isRejectButtonLoading, setIsRejectButtonLoading] = useState(false);
-  const [isSwapButtonLoading, setIsSwapButtonLoading] = useState(false);
-  const [isSignButtonLoading, setIsSignButtonLoading] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const [isFetchedData, setIsFetchedData] = useState<boolean>(false);
-  const [isNewTransaction, setIsNewTransaction] = useState<boolean>(true);
-
-
-
-
-
   const { toast } = useToast();
+  const chainID = useActiveWalletChain();
 
-  const testAddress: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
 
+  const testOwner: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+  const supportedChains = { 1: 'Ethereum' };
+
+
+  const isChainSupported = () => {
+    return supportedChains.hasOwnProperty(chainID?.id ?? '');
+  };
+  
   useEffect(() => {
     try {
       safe
         .getOwners()
         .then((data) => {
           console.log(data);
-          setAuthorizedUsers([...data, testAddress.toLowerCase()]);
+          setAuthorizedUsers([...data, testOwner.toLowerCase()]);
         })
         .catch((error) => console.error("Error:", error));
 
@@ -126,393 +114,64 @@ export const MainPage = () => {
     }
   }, [safe]);
 
-  useEffect(() => { }, []);
-
-  const CVX_ADDRESS = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
-  const CRV_ADDRESS = "0xd533a949740bb3306d119cc777fa900ba034cd52";
-  const FXS_ADDRESS = "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0";
-
-  const THREE_CRV_ADDRESS = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
-
-  const handleConfirmTX = async (safeTxHash: string) => {
-    try {
-      const safeTransaction = await safeApiKit.getTransaction(safeTxHash);
-      const executeTransaction = await safe.executeTransaction(safeTransaction);
-      const receipt = await executeTransaction.transactionResponse?.wait();
-      console.log(receipt);
-    } catch (error) {
-      console.log(error);
-      toast({
-        variant: "default",
-        className: "bg-red-500 text-white",
-        title: "Uh oh! Something went wrong.",
-        description: (error as Error).message,
-      });
-      throw new Error("Error in confirming transaction");
-    }
-  };
-
-  const handleSignTx = async (
-    isRejected: boolean,
-    pendingTxData?: PendingTxData,
-    isNewTx: boolean = false
-  ) => {
-    try {
-  
-      if (!isRejected && (pendingTransactions || isNewTx)) {
-        if (pendingTxData === undefined && isNewTx) {
-          if (!desiredoutput.some(item => item.selected)) {
-            toast({
-              variant: "default",
-              className: "bg-red-500 text-white",
-              title: "At least one item must be selected.",
-            });
-            throw new Error("Please select a desired output");
-          }
-          setIsSwapButtonLoading(true); // Starting the swap process
-        } else {
-          setIsSignButtonLoading(true); // Starting the sign process for existing pending transactions
-        }
-      } else if (isRejected) {
-        setIsRejectButtonLoading(true); // Starting the reject process
-      } else {
-        throw new Error("Invalid transaction state.");
-      }
-
-      let signTransaction:
-        | SafeTransaction
-        | SafeMultisigTransactionResponse
-        | null = null;
-      let isProposed = true;
-      if (pendingTxData && pendingTxData.pending) {
-        if (isRejected) {
-          if (pendingTxData.rejected) {
-            signTransaction = pendingTxData.rejected;
-          } else {
-            signTransaction = await safe.createRejectionTransaction(
-              pendingTxData.pending.nonce
-            );
-            isProposed = false;
-          }
-        } else {
-          if (pendingTxData.pending) {
-            signTransaction = pendingTxData.pending;
-          }
-        }
-      } else if (isNewTx && transactionData) {
-
-        // here
-        const nextNonce =  !isNewTransaction ? pendingTransactions.pending.nonce : await safeApiKit.getNextNonce(multiSigAddress);
-
-        console.log(nextNonce,pendingTransactions.pending.nonce, await safeApiKit.getNextNonce(multiSigAddress))
-
-        signTransaction = await safe.createTransaction({
-          transactions: [
-            {
-              to: transactionData.to,
-              value: transactionData.value,
-              data: transactionData.data,
-              operation: OperationType.DelegateCall, // required for security
-            },
-          ],
-          options: {
-            nonce: nextNonce,
-          },
-        });
-        isProposed = false;
-
-      }
-
-      if (signTransaction) {
-        let safeTxHash = "";
-        if (signTransaction.data) {
-          safeTxHash = await safe.getTransactionHash(
-            signTransaction as SafeTransaction
-          );
-        } else {
-          safeTxHash = (signTransaction as SafeMultisigTransactionResponse)
-            .safeTxHash;
-        }
-
-        await safe.connect({
-          ethAdapter: ethAdapter,
-          safeAddress: multiSigAddress,
-        });
-        const senderSignature = await safe.signHash(safeTxHash);
-
-        senderSignature && toast({
-          variant: "default",
-          title: "Transaction successfully signed.",
-        });
-
-        if (!isProposed) {
-          let checksumMultiSigAddress = ethers.getAddress(multiSigAddress);
-
-          await safeApiKit.proposeTransaction({
-            safeAddress: checksumMultiSigAddress,
-            safeTransactionData: (signTransaction as SafeTransaction).data, // Fix: Convert expression to 'unknown' first before casting to SafeTransactionData
-            safeTxHash,
-            senderAddress: await clientSigner.getAddress(),
-            senderSignature: senderSignature.data,
-            origin: SAFE_TRANSACTION_ORIGIN,
-          });
-
-          toast({
-            variant: "default",
-            title: "Success! Proposal created.",
-          });
-        } else {
-          await safeApiKit.confirmTransaction(safeTxHash, senderSignature.data);
-        }
-      } else {
-        throw new Error("No transaction to sign");
-      }
-    } catch (error) {
-      console.log(error);
-      toast({
-        variant: "default",
-        className: "bg-red-500 text-white",
-        title: "Uh oh! Something went wrong.",
-        description: (error as Error).message,
-      });
-      throw error;
-    }
-  };
-
   const isExecutable = async () => {
     const nonce = await safe.getNonce();
-    console.log("firstNonce", nonce);
-    const ourNonce = pendingTransactions && pendingTransactions.pending.nonce;
-    //  return nonce === ourNonce
+    const ourNonce = pendingTransactions && pendingTransactions.pending?.nonce;
     setCheckExecutable(nonce === ourNonce);
-  };
-
-
-  const transformTransactionDataClaimAsset = (transactionData: any) => {
-
-    const assets = [
-      { id: 1, tokenName: "CRV", address: CRV_ADDRESS },
-      { id: 2, tokenName: "CVX", address: CVX_ADDRESS },
-      { id: 3, tokenName: "FXS", address: FXS_ADDRESS },
-      { id: 4, tokenName: "3CRV", address: THREE_CRV_ADDRESS },
-    ];
-
-    return assets.map((asset) => {
-      const assetData =
-        transactionData && transactionData?.assetChanges.claim[asset.address];
-      return {
-        ...asset,
-        amount: assetData ? assetData.amount : 0,
-        tick: !!assetData,
-        dollarValue: assetData ? assetData.dollarValue : 0,
-        // tokenName: assetData ? assetData.tokenName : "",
-      };
-    });
-  };
-
-  const transformTransactionDataClaimAndSwapAsset = (transactionData: any) => {
-    const claimAndSwapAssets =
-      transactionData && transactionData?.assetChanges.claimAndSwap;
-    // const claimAndSwapTotal = claimAndSwapAssets && Object.values(claimAndSwapAssets).reduce((total: number, asset: any) => total + (asset.amount) as number, 0);
-
-    const outputTransformedData: TokenData[] = [];
-    if (claimAndSwapAssets) {
-      for (const claimAndSwapAsset of Object.values(claimAndSwapAssets)) {
-        const amount = (claimAndSwapAsset as any).amount;
-        if (amount > 0.001) {
-          outputTransformedData.push({
-            token: (claimAndSwapAsset as any).symbol,
-            balance: (claimAndSwapAsset as any).amount,
-            dollarValue: (claimAndSwapAsset as any).dollarValue,
-            selected: true,
-          });
-        }
-      }
-    }
-
-    const sortedData = outputTransformedData.sort(
-      (prev, next) => next.dollarValue - prev.dollarValue
-    );
-
-    return sortedData;
-  };
-  // check if transaction is already rejected
-
-  const checkIfSigned = () => {
-    // console.log(pendingTransactions, typeof(pendingTransactions));
-    const txnData = pendingTransactions?.pending;
-    // console.log(txnData, typeof(txnData));
-    if (!txnData) {
-      return false;
-    }
-    const user = activeAccount?.address.toLowerCase();
-    let hasSigned: boolean = false;
-    for (const item of txnData?.confirmations) {
-      if (item.owner.toLowerCase() === user) {
-        hasSigned = true;
-        break;
-      }
-    }
-
-    console.log("rejected", hasSigned);
-    return hasSigned;
-  };
-  const checkIfRejected = () => {
-    // console.log(pendingTransactions, typeof(pendingTransactions));
-    const txnData = pendingTransactions?.rejected;
-    console.log("trexx", txnData, typeof (txnData));
-    let hasRejected: boolean = false;
-    if (txnData) {
-      const user = activeAccount?.address.toLowerCase();
-      for (const item of txnData?.confirmations) {
-        if (item.owner.toLowerCase() === user) {
-          hasRejected = true;
-          break;
-        }
-      }
-    }
-
-
-    console.log("rejected", hasRejected);
-    return hasRejected;
-  };
-
-  // check if completed required confirmations
-  const checkIfConfirmed = () => {
-    let confirmed = false;
-    const txnData = pendingTransactions?.pending;
-    console.log(txnData, typeof txnData);
-    if (txnData) {
-      const confirmations_given = txnData?.confirmations.length;
-      const confirmations_required = txnData?.confirmationsRequired;
-      confirmed = confirmations_given >= confirmations_required;
-    }
-
-    console.log("Confirmed", confirmed)
-
-    setIsConfirmed(confirmed);
-  };
-  const fetchdata = async () => {
-    setIsFetchedData(true);
-    const pendingTX = await getPendingTransaction();
-    pendingTX && setPendingTransactions(pendingTX);
-   
-    if (pendingTX && isNewTransaction) {
-      try {
-        const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
-        const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
-        const txData = {
-          chainId: CHAIN_ID,
-          data: pendingTX?.pending?.data,
-          from: multiSigAddress,
-          to: pendingTX?.pending?.to,
-          value: pendingTX?.pending?.value,
-        };
-        let endSimulation: EndSimulation = await reSimulateTx(
-          CHAIN_ID,
-          txData,
-          multiSigAddress,
-          SAFE_OWNER
-        );
-        const multisigClaimAssetChanges = endSimulation.claim[multiSigAddress];
-        const multisigClaimAndSwapAssetChanges =
-          endSimulation.claimAndSwap[multiSigAddress];
-        console.log(multisigClaimAssetChanges);
-        console.log(multisigClaimAndSwapAssetChanges);
-        const outputTx = {
-          data: pendingTX?.pending?.data,
-          to: pendingTX?.pending?.to,
-          value: pendingTX?.pending?.value,
-          assetChanges: {
-            claim: multisigClaimAssetChanges,
-            claimAndSwap: multisigClaimAndSwapAssetChanges,
-          },
-        };
-
-        console.log("outputtx", outputTx);
-        setTransactionData(outputTx);
-      } catch (error) {
-        toast({
-          variant: "default",
-          className: "bg-red-500 text-white",
-          title: "Uh oh! Something went wrong.",
-          description: (error as Error).message,
-        });
-
-        throw new Error("Error in fetching data");
-      }
-      finally {
-        setIsFetchedData(false);
-      }
-    } else {
-      try {
-        const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
-        const SAFE_OWNER: string = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
-        const result = await buildClaimAndSwapTx(
-          CHAIN_ID,
-          multiSigAddress,
-          SAFE_OWNER
-        );
-        console.log(`ress`, result);
-        setTransactionData(result);
-      } catch (error) {
-        console.log(error)
-        toast({
-          variant: "default",
-          className: "bg-red-500 text-white",
-          title: "Uh oh! Something went wrong.",
-          description: (error as Error).message,
-        });
-        throw new Error("Error in fetching data");
-      }
-      finally {
-        setIsFetchedData(false);
-      }
-    }
+    //  return nonce === ourNonce
   };
 
   useEffect(() => {
-    fetchdata();
-    checkIfConfirmed();
-  }, [isNewTransaction]);
+    if (
+      authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase())
+      // true
+    ) {
+      setIsAuthorizedUser(true);
+      fetchdata()
+      checkIfConfirmed(pendingTransactions, setIsConfirmed);
+    }
+
+  }, [isNewTransaction, activeAccount, authorizedUsers]);
 
 
   const sumClaimAndSwapAmount = transactionData
     ? Object.values(transactionData.assetChanges.claimAndSwap).reduce(
       (sum, current: any) => sum + current.amount,
-      0
-    )
-    : 0;
-
-    console.log("enter",transactionData != null , !isNewTransaction)
+      0): 0;
 
   return (
     <>
       {walletConnectionStatus === "connected" ? (
         <>
+         {!isChainSupported() &&  <ChainAlert/>}
           <Navbar />
           {
-            // authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
-            true ? (
+            isAuthorizedUser ? (
+              // true ? (
+            authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
               <>
                 {
                   // true ? (
-                  (transactionData != null )? (
+                  (transactionData != null) ? (
                     <>
                       {(pendingTransactions != null && isNewTransaction) ? (
-                        // false ? (
+                        //  {/* { true ? ( */}
                         <>
                           <div className="flex flex-row gap-10 items-start justify-center px-4">
-                            <ReadOnlyRewardsCard
+                            <ClaimableRewardsCard
                               assets={transformTransactionDataClaimAsset(
                                 transactionData
                               )}
                             />
-                            <ReadonlyDesiredOutputCard
+                            <DesiredOutputCard
+                              tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                              isEditable={false}
+                            />
+                            {/* <ReadonlyDesiredOutputCard
                               tokenData={transformTransactionDataClaimAndSwapAsset(
                                 transactionData
                               )}
-                            />
+                            /> */}
                           </div>
                           <div className="w-full p-4 flex justify-center items-center gap-5">
                             {!isConfirmed ? (
@@ -521,17 +180,19 @@ export const MainPage = () => {
                                   onClick={() =>
                                     handleSignTx(false, pendingTransactions)
                                   }
-                                  hide={checkIfSigned()}
+                                  hide={checkIfSigned(pendingTransactions, activeAccount)}
                                   label="Sign"
+                                  loading={loadingState.sign}
                                 />
                                 <Button
                                   variant="destructive"
-                                  hidden={checkIfRejected()}
+                                  hidden={checkIfRejected(pendingTransactions, activeAccount)}
                                   onClick={() =>
                                     handleSignTx(true, pendingTransactions)
                                   }
+                                  
                                 >
-                                  {isRejectButtonLoading ? (
+                                  {loadingState.reject ? (
                                     <>
                                       <ThreeDots
                                         visible={true}
@@ -548,6 +209,9 @@ export const MainPage = () => {
                                     <>Reject</>
                                   )}
                                 </Button>
+
+                                {/* <p>{pendingTransactions.pending?.confirmations ?? ''}</p>
+                                <p>{pendingTransactions.rejected?.confirmations}</p> */}
                               </>
                             ) : (
                               <TooltipProvider delayDuration={10}>
@@ -555,12 +219,11 @@ export const MainPage = () => {
                                   <TooltipTrigger>
                                     <PremiumButton
                                       onClick={() =>
-                                        handleConfirmTX(
-                                          pendingTransactions.safeTxHash
-                                        )
+                                        handleConfirmTX(pendingTransactions && pendingTransactions.pending?.safeTxHash as string)
                                       }
                                       label="Confirm"
                                       disabled={!checkExecutable}
+                                    // loading={}
                                     />
                                   </TooltipTrigger>
                                   <TooltipContent>
@@ -575,27 +238,17 @@ export const MainPage = () => {
                       ) : (
                         <>
                           <div className="flex flex-col ">
-                            {/* <div className="flex flex-row gap-10 items-center justify-center ">
-                          {Object.entries(metaData).map(([groupName, items], index) => (
-                            <div key={index} className="m-5 flex flex-col gap-4 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-                              {items.map((item, itemIndex) => (
-                                <MetadataCard
-                                  key={itemIndex}
-                                  text={item.subValues ? `${item.key}: ${item.subValues.map(sub => `${sub.label} ${sub.value}`).join(', ')}` : `${item.key}: ${item.value}`}
-                                />
-                              ))}
-                            </div>
-                          ))}
-                        </div> */}
                             <div className="flex flex-row gap-10 items-start justify-center px-4">
                               <ClaimableRewardsCard
                                 assets={transformTransactionDataClaimAsset(
                                   transactionData
                                 )}
                               />
-
                               <DesiredOutputCard
-                                totalBalance={sumClaimAndSwapAmount as number}
+                                tokenData={transformTransactionDataClaimAsset(
+                                  transactionData
+                                )}
+                                isEditable={true}
                               />
                             </div>
                           </div>
@@ -603,10 +256,11 @@ export const MainPage = () => {
                             <PremiumButton
                               onClick={() =>
                                 handleSignTx(false, undefined, true)
+                                // handleSwap()
                               }
                               label="Swap"
-                            // disabled={transactionQueue?.count > 0 || true}
-
+                              // disabled={transactionQueue?.count > 0 || true}
+                              loading={loadingState.swap}
                             />
                           </div>
                         </>
@@ -615,7 +269,7 @@ export const MainPage = () => {
                   ) : (
                     isFetchedData ? (
                       <div>
-                        <Loader />
+                        <Loader data="Fetching transaction data..." />
                       </div>
                     ) : <>
                       <ErrorCreateTxPage
@@ -633,6 +287,9 @@ export const MainPage = () => {
                 errorTitle={"401: Unauthorized Access"}
                 errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
               />
+            ) 
+            ) : (
+              <Loader data="Authenticating..." />
             )
           }
         </>

@@ -1,4 +1,4 @@
-import { PendingTxData } from "./utils/utils";
+import { PendingTxData } from "./Types";
 
 export const dummyData: PendingTxData = {
     pending:
@@ -14,7 +14,7 @@ export const dummyData: PendingTxData = {
         "baseGas": 0,
         "gasPrice": "0",
         "refundReceiver": "0x0000000000000000000000000000000000000000",
-        "nonce": 2,
+        "nonce": 3,
         "executionDate": "",
         "submissionDate": "2024-04-24T11:02:23.615475Z",
         "modified": "2024-04-24T11:02:23.708276Z",

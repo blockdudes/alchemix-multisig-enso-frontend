@@ -3,29 +3,27 @@ import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 // import { ethers, Interface, Result, Transaction } from "ethers";
 import { OperationType, SafeMultisigTransactionResponse } from "@safe-global/safe-core-sdk-types";
 import { generatePreValidatedSignature } from "@safe-global/protocol-kit/dist/src/utils";
-import { ethers, Interface, Result, Transaction } from "ethers"
+import { ethers } from "ethers"
 import SafeApiKit, { SafeMultisigTransactionListResponse } from '@safe-global/api-kit';
-import { multiSigAddress, RPC_URL, SAFE_API_URL, SAFE_TRANSACTION_ORIGIN, SEPOLIA_RPC_URL } from "@/lib/constants";
+import { ethAddress, multiSigAddress, RPC_URL, SAFE_TRANSACTION_ORIGIN, SEPOLIA_RPC_URL, threePoolManagerAddress } from "@/lib/constants";
+import { Assets, PendingTxData } from "@/Types";
+import { Account } from "thirdweb/wallets";
+import { useEthereum } from "@/context/store";
 import { dummyData } from "@/dummydata";
 
 
 
 // const tenderly: Tenderly = require("tenderly");
 const ensoApi = "https://api.enso.finance/api/v1/";
-const ensoApiKey = "1e02632d-6feb-4a75-a157-documentation";
 const tenderlyApi = "https://api.tenderly.co/api/v1";
 const tenderlyProjectName = "project";
 const tenderlyUserName = "amritjain";
-
 const tenderlyProjectApi = `${tenderlyApi}/account/${tenderlyUserName}/project/${tenderlyProjectName}`;
-const tenderlyApiKey = "0zBCBQ1AK8PKm51GbN5k9bopBGPXRhmF";
-const safeOwner: string = "0x5788F90196954A272347aEe78c3b3F86F548D0a9";
-const chainId: number = 1;
 
-const threePoolManagerAddress = "0x9735f7d3ea56b454b24ffd74c58e9bd85cfad31b";
-const twoPoolManagerAddress = "0x06378717d86b8cd2dba58c87383da1eda92d3495";
-const poolManagerAddress = "0x9fb54d1f6f506feb4c65b721be931e59bb538c63";
-const ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+
+const ensoApiKey = "1e02632d-6feb-4a75-a157-documentation";
+const tenderlyApiKey = "0zBCBQ1AK8PKm51GbN5k9bopBGPXRhmF";
+
 // const zeroAddress = "0x0000000000"
 interface SafeTxData {
   to: string;
@@ -241,7 +239,6 @@ export const buildClaimAndSwapTx = async (
 ): Promise<EnsoTx> => {
 
   try {
-  console.log("build and simulate")
     const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
 
     const claimRewardEnsoData = claimRewardData();
@@ -311,6 +308,7 @@ export const buildClaimAndSwapTx = async (
       },
     };
 
+    console.log("-->",outputTx)
     return outputTx;
   } catch (error) {
     console.log(error)
@@ -486,29 +484,6 @@ export const getAllTransations = async () => {
 
 }
 
-
-// export const getPendingTransaction = async () => {
-//   try {
-
-//     const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
-
-//     const safeApiKit = new SafeApiKit({
-//       chainId: (await ethersProvider.getNetwork()).chainId,
-//     });
-
-//     console.log(safeApiKit)
-//     const checksum_multisig = ethers.getAddress(multiSigAddress)
-//     const transactions = await safeApiKit.getPendingTransactions(checksum_multisig);
-
-//     console.log(transactions)
-//     return transactions;
-//   } catch (error) {
-//     console.log(error)
-//     throw new Error("Error fetching pending transactions")
-//   }
-
-// }
-
 const processAssetChanges = (
   assetChanges: Record<string, AssetChanges>,
   changes: any,
@@ -547,7 +522,7 @@ const processAssetChanges = (
       -amount,
       -rawAmount,
       symbol,
-      dollarValue
+      -dollarValue
     );
   }
 
@@ -623,11 +598,6 @@ export const reSimulateTx = async (
 
 }
 
-
-export interface PendingTxData {
-  pending?: SafeMultisigTransactionResponse;
-  rejected?: SafeMultisigTransactionResponse;
-}
 export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     try {
@@ -716,5 +686,97 @@ export const getPendingTransaction_null =
 
     // Wait for the Promise to resolve, but do nothing with the result
     await new Promise((resolve) => resolve(null));
-    return null
+    return null;
   }
+
+
+
+  export const transformTransactionDataClaimAsset = (transactionData: any) => {
+    const assetChanges = transactionData && transactionData.assetChanges?.claim;
+    if (!assetChanges) return []; // Return an empty array if no asset changes
+  
+    return Object.entries(assetChanges).map<Assets>(([address, assetData]: [string, any]): Assets => ({
+      id: address,
+      amount: assetData.amount || 0,
+      tick: !!assetData.amount,
+      dollarValue: assetData.dollarValue || 0,
+      tokenName: assetData.symbol || ""
+    }));
+  };
+  
+
+  export const transformTransactionDataClaimAndSwapAsset = (transactionData: any) => {
+    const claimAndSwapAssets = transactionData && transactionData.assetChanges?.claimAndSwap;
+    if (!claimAndSwapAssets) return []; // Return an empty array if no assets are present
+  
+    // Filter and transform claim and swap assets directly from the data
+    const outputTransformedData = Object.entries(claimAndSwapAssets)
+      .map<Assets>(([address, assetData]: [string, any]):Assets => ({
+        id: address,
+        tokenName: assetData.symbol || "",
+        amount: assetData.amount || 0,
+        dollarValue: assetData.dollarValue || 0,
+        tick: assetData.amount > 0.001,
+      }))
+      .filter(asset => asset.tick); // Filter out assets below the threshold of 0.001 amount
+  
+    // Sort the data by dollar value in descending order
+    const sortedData = outputTransformedData.sort((a, b) => b.dollarValue - a.dollarValue);
+  
+    return sortedData;
+  };
+  
+  // check if transaction is already rejected
+
+  export const checkIfSigned = (pendingTransactions:any,activeAccount: Account | undefined  ) => {
+    const txnData = pendingTransactions?.pending;
+    if (!txnData) {
+      return false;
+    }
+    const user = activeAccount?.address.toLowerCase();
+    let hasSigned: boolean = false;
+    for (const item of txnData?.confirmations) {
+      if (item.owner.toLowerCase() === user) {
+        hasSigned = true;
+        break;
+      }
+    }
+
+    console.log("signed", hasSigned);
+    return hasSigned;
+  };
+
+
+  // check if transaction is already rejected
+  export const checkIfRejected = (pendingTransactions:any,activeAccount: Account | undefined  ) => {
+    const txnData = pendingTransactions?.rejected;
+    let hasRejected: boolean = false;
+    if (txnData) {
+      const user = activeAccount?.address.toLowerCase();
+      for (const item of txnData?.confirmations) {
+        if (item.owner.toLowerCase() === user) {
+          hasRejected = true;
+          break;
+        }
+      }
+    }
+
+
+    return hasRejected;
+  };
+
+  // check if completed required confirmations
+  export const checkIfConfirmed = (pendingTransactions:any, setIsConfirmed: React.Dispatch<React.SetStateAction<boolean>>) => {
+    let confirmed = false;
+    const txnData = pendingTransactions?.pending;
+    if (txnData) {
+      const confirmations_given = txnData?.confirmations.length;
+      const confirmations_required = txnData?.confirmationsRequired;
+      confirmed = confirmations_given >= confirmations_required;
+    }
+
+    console.log("Confirmed", confirmed)
+
+    setIsConfirmed(confirmed);
+  }
+  

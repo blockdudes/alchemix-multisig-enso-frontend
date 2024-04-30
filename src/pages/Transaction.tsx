@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useEffect, useState } from "react";
 import PremiumButton from "@/components/ui/PremiumButton";
 import { Button } from "@/components/ui/button";
-import ReadOnlyRewardsCard from "@/components/ui/ReadonlyRewardCard";
+import ReadOnlyRewardsCard from "@/components/ui/ClaimableRewardsCard";
 import ReadonlyDesiredOutputCard from "@/components/ui/ReadonlyDesiredOutputCard";
 import { useActiveWalletConnectionStatus, useIsAutoConnecting } from "thirdweb/react";
 import { buildClaimAndSwapTx, getAllTransations, getPendingTransaction } from "@/utils/utils";
@@ -190,109 +190,10 @@ export const Transaction = () => {
     }
 
 
-    // const getTx = async () => {
-    //     try {
-    //         const queuedtransaction = await getPendingTransaction();
-    //         console.log(queuedtransaction)
-    //         const queuedMultisigTransaction = queuedtransaction.results.filter(item => item.isExecuted === false && item.origin === SAFE_TRANSACTION_ORIGIN);
-    //         console.log(queuedMultisigTransaction)
-    //         setQueuedTransactions(queuedMultisigTransaction)
-
-    //     } catch (error) {
-    //         console.error('Error fetching transactions:', error);
-    //         throw error;
-    //     }
-    // }
-
-
-    // const rawTransaction = await fetchdata();
-    // setRawTransactionData(rawTransaction)
-
-    // useEffect(() => {
-    //     getTx()
-    // }, []);
-
-
-    const handleSignTx = async () => {
-        // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
-        // const signer = await ethersProvider.getSigner()
-
-        // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
-
-        // const protocol = new protocolKit();
-        // const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
-
-        try {
-
-
-            let transactionSafe1_1 = await safe.createTransaction({
-                transactions: [{
-                    to: rawTransactionData.to,
-                    value: rawTransactionData.value,
-                    data: rawTransactionData.data,
-                    operation: OperationType.DelegateCall, // required for security
-                }]
-            })
-
-
-            await safe.connect(
-                { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
-            )
-
-
-            await safe.signTransaction(transactionSafe1_1, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
-
-            const newPendingTransaction: any = await getPendingTransaction();
-
-            if (newPendingTransaction.confirmationsRequired === newPendingTransaction.confirmations.length) {
-                safe.executeTransaction(transactionSafe1_1)
-            }
-
-        } catch (error) {
-            console.log(error)
-            throw error;
-        }
-
-
-    }
-
-    const handleRejectTx = async () => {
-
-        let nonce = queuedTransactions[0].nonce;
-        // const ethersProvider = new ethers.BrowserProvider(window.ethereum)
-        // const signer = await ethersProvider.getSigner()
-
-        // const ethAdapter = new EthersAdapter({ ethers, signerOrProvider: signer })
-        // const protocol = await Safe.create({ ethAdapter: ethAdapter, safeAddress: multiSigAddress });
-
-
-        try {
-
-            const reject_transasction = await safe.createRejectionTransaction(nonce)
-
-            await safe.connect(
-                { ethAdapter: ethAdapter, safeAddress: multiSigAddress }
-            )
-
-            await safe.signTransaction(reject_transasction, SigningMethod.ETH_SIGN_TYPED_DATA_V4);
-
-            const newPendingTransaction: any = await getPendingTransaction();
-
-            if (newPendingTransaction.confirmationsRequired === newPendingTransaction.confirmations.length) {
-                safe.executeTransaction(reject_transasction)
-            }
-
-        } catch (error) {
-            console.log(error)
-            throw error;
-        }
-    }
-
-
     return (
         <div className="w-full p-4 flex justify-center items-center gap-5">
-            <PremiumButton onClick={() => handleSignTx()} label="Sign" />
-            <Button onClick={() => handleRejectTx()}>Reject</Button>
+            <PremiumButton onClick={() => {}} label="Sign" />
+            <Button onClick={()=>{}}>Reject</Button>
         </div>
 
     );

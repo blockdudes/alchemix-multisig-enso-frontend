@@ -7,24 +7,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from 'react';
 import { Assets } from "@/Types";
+import { ScrollArea } from "../ui/scroll-area";
 
 
 
 const calculateTotalValue = (assets: Assets[]) => {
   return assets.reduce((total: number, asset: Assets) => {
     if (asset.tick) {
-      return total + asset.amount;
+      return total + asset.dollarValue;
     } else {
       return total;
     }
@@ -55,37 +47,38 @@ const ClaimableRewardsCard = ({ assets }: { assets: Assets[] }) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {/* <TableHead className="w-[80px]"></TableHead> */}
-                  <TableHead className="text-center">Claimable Tokens</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Amount($)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items && items.map((asset: Assets, index: number) => (
-                  <TableRow key={index} className="text-center">
-                    {/* <TableCell className="font-medium">
-                       <Checkbox
-                            id={`asset-${index}`}
-                            onCheckedChange={() => handleSelect(asset.id)}
+            <form >
+                <div className="w-full items-center gap-4">
+                <div>
+                  <div className="flex justify-between p-2 pl-12 text-slate-400 text-sm  ">
+                    <div className="table-cell text-start">Token</div>
+                    <div className="table-cell text-start">Balance</div>
+                    <div className="table-cell text-start">Amount($)</div>
+                  </div>
+                  <hr />
+                  <ScrollArea className="h-60 w-full scroll-px-py">
+                  {items && items.map((item:Assets , index: number) => {
+                    return (
+                      <div key={index} className="flex justify-between items-center p-2 gap-4 ml-8">
+                     
+                     <div className="table-cell ">{item.tokenName}</div>
+                     <div className="table-cell ">{item.amount.toFixed(2)}</div>
+                     <div className="table-cell ">${item.dollarValue.toFixed(2)}</div>
+                     
+                     {/* <div className="table-cell pt-4 w-24 text-right">{totalBalance ? (item.balance / (totalBalance ?? 1) * 100).toFixed(2) : 0 } %</div> */}
 
-                            />
-                    </TableCell> */}
-                    <TableCell className="font-medium ">{asset.tokenName}</TableCell>
-                    <TableCell className="text-right">{asset.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${asset.dollarValue.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                   </div>
+                    )
+                  })}
+                  </ScrollArea>
+                </div>
+              </div>
+            </form>
           </CardContent>
-          <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom ">
+          <CardFooter className="absolute bottom-0  w-full flex justify-center align-bottom border ">
             <Button className=" w-full cursor-auto pointer-events-none">
               Total Value:{" "}
-              <span className="ml-5">${(totalValue ?? 0).toFixed(2)}</span>
+              <span className="ml-5">${(totalValue).toFixed(2)}</span>
             </Button>
           </CardFooter>
         </Card>

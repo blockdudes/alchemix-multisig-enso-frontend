@@ -1,3 +1,5 @@
+import { SafeMultisigTransactionResponse } from "@safe-global/safe-core-sdk-types";
+
 export interface TokenData {
   token: string;
   balance: number;
@@ -5,13 +7,6 @@ export interface TokenData {
   dollarValue: number;
 }
 
-
-export interface TokenData {
-  token: string;
-  balance: number;
-  dollarValue: number;
-  selected: boolean;
-}
 
 export interface AssetChanges {
   [token: string]: {
@@ -33,7 +28,7 @@ export interface EnsoTx {
 
 
 export interface Assets {
-  id: number;
+  id: string;
   tokenName: string;
   amount: number;
   tick: boolean;
@@ -44,4 +39,10 @@ export interface Assets {
 
 export interface DesiredOutputCardProps {
   totalBalance?: number;
+}
+
+
+export interface PendingTxData {
+  pending?: SafeMultisigTransactionResponse;
+  rejected?: SafeMultisigTransactionResponse;
 }

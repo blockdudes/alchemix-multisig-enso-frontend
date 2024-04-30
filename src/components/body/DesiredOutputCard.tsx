@@ -12,18 +12,13 @@ import { Checkbox } from "../ui/checkbox";
 import { useEffect, useState } from "react";
 import { DesiredOutputCardProps, TokenData } from "@/Types";
 import { useEthereum } from "@/context/store";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 
 const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) => {
 
   const { desiredoutput, setDesiredOutput } = useEthereum();
-
-
-  const updateTotalUsed = () => {
-    const total = desiredoutput.reduce((prev: number, cur: TokenData) => prev + cur.balance, 0);
-    // setTotalUsed(total);
-  }
-
+  console.log("lol",desiredoutput)
 
   const toggleSelected = (index: number) => {
     const newData = [...desiredoutput];
@@ -52,7 +47,6 @@ const DesiredOutputCard: React.FC<DesiredOutputCardProps> = ({ totalBalance }) =
     }
 
     setDesiredOutput(newData);
-    updateTotalUsed();
 };
 
 
@@ -97,6 +91,7 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                     <div className="table-cell">Amount($)</div>
                   </div>
                   <hr />
+                  <ScrollArea className="h-60 w-full scroll-px-py">
                   {desiredoutput.map((item:TokenData, index: number) => {
                     return (
                       <div key={index} className="flex justify-between items-center p-2 gap-4">
@@ -126,15 +121,17 @@ const handleSliderChange = (index : number, newPercentage : number) => {
                       </div>
                     )
                   })}
+                  </ScrollArea>
                 </div>
               </div>
             </form>
           </CardContent>
-          <CardFooter className="absolute bottom-0 w-full flex flex-col justify-center gap-1 ">
+          <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">
             {/* <CardDescription className="w-full text-right ">
             Current Selected : <span className="ml-5">{totalUsed.toFixed(0)}</span>
             </CardDescription> */}
-            <Button className="w-full cursor-auto pointer-events-none" onClick={() => console.log(desiredoutput)}>Total value : <span className="ml-5">{(totalBalance ?? 0).toFixed(2)}</span></Button>
+            <Button className="w-full text-center cursor-auto pointer-events-none">Total value : <span className="ml-5">${(totalBalance ?? 0).toFixed(2)}</span></Button>
+
           </CardFooter>
 
         </Card>

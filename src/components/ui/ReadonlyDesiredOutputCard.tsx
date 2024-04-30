@@ -18,15 +18,13 @@ import {
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "../ui/checkbox";
 import { ScrollArea } from "./scroll-area";
-import { TokenData } from "@/Types";
+import { Assets, TokenData } from "@/Types";
 
 
-const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData }) => {
+const ReadOnlyOutputCard: React.FC<{ tokenData: Assets[] }> = ({ tokenData }) => {
 
 
-  const totalBalance: number = tokenData.filter(item => item.selected).reduce((acc: number, item: TokenData) => acc + item.dollarValue, 0)
-  
-  
+  const totalBalance: number = tokenData.filter(item => item.tick).reduce((acc: number, item: Assets) => acc + item.dollarValue, 0)
 
 
   return (
@@ -46,25 +44,24 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
                 <TableRow>
                   {/* <TableHead className="text-center w-[30px]"></TableHead> */}
                   <TableHead className="text-center  ">Token</TableHead>
-                  {/* <TableHead className="text-right">Balance(%)</TableHead> */}
-                  <TableHead className="text-center">Amount</TableHead>
-                  <TableHead className="text-center">Value($)</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-center">Amount($)</TableHead>
+
 
                 </TableRow>
               </TableHeader>
-              {/* <TableBody className=""> */}
-             
+              {/* <TableBody className=""> */}             
 
                 <TableBody className="">
                 <TableCell colSpan={3}>
                 <ScrollArea className="h-60 w-full scroll-px-py">
 
-                  {tokenData.map((item: TokenData, index: number) => (
+                  {tokenData.map((item: Assets, index: number) => (
                     <TableRow key={index} className="" >
 
-                      <TableCell className="font-medium text-center">{item.token}</TableCell>
+                      <TableCell className="font-medium text-center">{item.tokenName}</TableCell>
                       {/* <TableCell className="font-medium ">{(item.balance / (totalBalance == 0 ?  1: totalBalance) * 100).toFixed(2)}%</TableCell> */}
-                      <TableCell className="font-medium text-center">{item.balance.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium text-center">{item.amount.toFixed(2)}</TableCell>
                       <TableCell className="font-medium text-center">${item.dollarValue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
@@ -73,7 +70,6 @@ const ReadOnlyOutputCard: React.FC<{ tokenData: TokenData[] }> = ({ tokenData })
               </TableBody>
               {/* </TableBody> */}
             </Table>
-
 
           </CardContent>
           <CardFooter className="absolute bottom-10 w-full flex flex-col justify-center gap-1">

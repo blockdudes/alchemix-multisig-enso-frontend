@@ -2,6 +2,7 @@ import { ConnectButton } from "thirdweb/react";
 import { createWallet, inAppWallet, walletConnect } from "thirdweb/wallets";
 import { createThirdwebClient } from "thirdweb";
 import { arbitrum, ethereum, optimism } from "thirdweb/chains";
+import { useTheme } from "@/components/theme-provider";
 
 
 const client = createThirdwebClient({
@@ -19,7 +20,12 @@ const client = createThirdwebClient({
 export function Connect() {
   return (
     <div>
-      <ConnectButton client={client} wallets={wallets} chains={[ethereum, arbitrum, optimism]}   connectModal={{ size: "wide" }}/>
+      <ConnectButton
+      client={client}
+      wallets={wallets}
+      chains={[ethereum, arbitrum, optimism]}
+      connectModal={{ size: "wide" }}
+      theme={useTheme().theme}/>
     </div>
   );
 }
