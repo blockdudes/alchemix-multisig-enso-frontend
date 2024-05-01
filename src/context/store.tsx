@@ -4,7 +4,7 @@ import anvil from "@/utils/anvil";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, SAFE_API_URL, SAFE_OWNER, SAFE_TRANSACTION_ORIGIN, multiSigAddress } from "@/lib/constants";
 import SafeApiKit from "@safe-global/api-kit";
-import { PendingTxData, TokenData } from "@/Types";
+import { Assets, PendingTxData, TokenData } from "@/Types";
 import { EndSimulation, buildClaimAndSwapTx, getPendingTransaction, reSimulateTx } from "@/utils/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { OperationType, SafeMultisigTransactionResponse, SafeTransaction } from "@safe-global/safe-core-sdk-types";
@@ -21,10 +21,11 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const [safe, setSafe] = useState<Safe | null>(null);
     const [safeApiKit, setSafeApiKit] = useState<SafeApiKit | null>(null);
     const dummyData = [
-        { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
+        { id: "0" ,tokenName: 'USDC', amount: 0, tick: false, dollarValue: 0 },
+        // { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
         // { token: 'Btc in unisat', balance: 0, selected: false,dollarValue: 0 },
     ]
-    const [desiredoutput, setDesiredOutput] = useState<TokenData[]>(dummyData)
+    const [desiredoutput, setDesiredOutput] = useState<Assets[]>(dummyData)
 
 
     const [transactionData, setTransactionData] = useState<any>(null);
@@ -47,7 +48,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchdata = async () => {
         setIsFetchedData(true);
         const pendingTX = await getPendingTransaction();
-        console.log(pendingTX)
+        console.log("---000000-----",pendingTX)
         pendingTX && setPendingTransactions(pendingTX);
 
         if (pendingTX && isNewTransaction) {
@@ -156,7 +157,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     
           if (!isRejected && (pendingTransactions || isNewTx)) {
             if (pendingTxData === undefined && isNewTx) {
-              if (!desiredoutput.some(item => item.selected)) {
+              if (!desiredoutput.some(item => item.tick)) {
                 toast({
                   variant: "default",
                   className: "bg-red-500 text-white",

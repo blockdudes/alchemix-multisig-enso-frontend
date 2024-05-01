@@ -35,7 +35,7 @@ import { ErrorCreateTxPage } from "./ErrorPage";
 
 import ErrorPage from "./ErrorPage";
 import { Button } from "@/components/ui/button";
-import {  PendingTxData, TokenData } from "@/Types";
+import { Assets, PendingTxData, TokenData } from "@/Types";
 import { useToast } from "@/components/ui/use-toast";
 import ChainAlert from "@/components/ui/Alert";
 
@@ -49,14 +49,14 @@ export const MainPage = () => {
     safe,
     desiredoutput,
     transactionData, setTransactionData, pendingTransactions, setPendingTransactions, isFetchedData, setIsFetchedData,
-    fetchdata,isNewTransaction, setIsNewTransaction, handleConfirmTX,
-    loadingState, setButtonLoading , handleSignTx
+    fetchdata, isNewTransaction, setIsNewTransaction, handleConfirmTX,
+    loadingState, setButtonLoading, handleSignTx
   }: {
     clientSigner: JsonRpcSigner;
     safeApiKit: SafeApiKit;
     ethAdapter: EthersAdapter;
     safe: Safe;
-    desiredoutput: TokenData[];
+    desiredoutput: Assets[];
     transactionData: any
     setTransactionData: any;
     pendingTransactions: PendingTxData;
@@ -73,12 +73,12 @@ export const MainPage = () => {
       reject: boolean;
     };
     setButtonLoading: (type: string, isLoading: boolean) => void;
-    handleSignTx: (isRejected: boolean, pendingTxData?: PendingTxData, isNewTx?: boolean ) => Promise<void>;
+    handleSignTx: (isRejected: boolean, pendingTxData?: PendingTxData, isNewTx?: boolean) => Promise<void>;
   } = useEthereum();
   const activeAccount = useActiveAccount();
 
 
-  const [ isAuthorizedUser, setIsAuthorizedUser ] = useState<boolean>(false);
+  const [isAuthorizedUser, setIsAuthorizedUser] = useState<boolean>(false);
   const [checkExecutable, setCheckExecutable] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
@@ -88,13 +88,13 @@ export const MainPage = () => {
 
 
   const testOwner: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
-  const supportedChains = { 1: 'Ethereum' };
+  const supportedChains = { 1: 'Ethereum', 11155111: 'Sepolia' };
 
 
   const isChainSupported = () => {
     return supportedChains.hasOwnProperty(chainID?.id ?? '');
   };
-  
+
   useEffect(() => {
     try {
       safe
@@ -134,160 +134,159 @@ export const MainPage = () => {
   }, [isNewTransaction, activeAccount, authorizedUsers]);
 
 
-  const sumClaimAndSwapAmount = transactionData
-    ? Object.values(transactionData.assetChanges.claimAndSwap).reduce(
-      (sum, current: any) => sum + current.amount,
-      0): 0;
-
   return (
     <>
       {walletConnectionStatus === "connected" ? (
         <>
-         {!isChainSupported() &&  <ChainAlert/>}
+          {!isChainSupported() && <ChainAlert />}
           <Navbar />
           {
             isAuthorizedUser ? (
               // true ? (
-            authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
-              <>
-                {
-                  // true ? (
-                  (transactionData != null) ? (
-                    <>
-                      {(pendingTransactions != null && isNewTransaction) ? (
-                        //  {/* { true ? ( */}
-                        <>
-                          <div className="flex flex-row gap-10 items-start justify-center px-4">
-                            <ClaimableRewardsCard
-                              assets={transformTransactionDataClaimAsset(
-                                transactionData
-                              )}
-                            />
-                            <DesiredOutputCard
-                              tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
-                              isEditable={false}
-                            />
-                            {/* <ReadonlyDesiredOutputCard
-                              tokenData={transformTransactionDataClaimAndSwapAsset(
-                                transactionData
-                              )}
-                            /> */}
-                          </div>
-                          <div className="w-full p-4 flex justify-center items-center gap-5">
-                            {!isConfirmed ? (
-                              <>
-                                <PremiumButton
-                                  onClick={() =>
-                                    handleSignTx(false, pendingTransactions)
-                                  }
-                                  hide={checkIfSigned(pendingTransactions, activeAccount)}
-                                  label="Sign"
-                                  loading={loadingState.sign}
-                                />
-                                <Button
-                                  variant="destructive"
-                                  hidden={checkIfRejected(pendingTransactions, activeAccount)}
-                                  onClick={() =>
-                                    handleSignTx(true, pendingTransactions)
-                                  }
-                                  
-                                >
-                                  {loadingState.reject ? (
-                                    <>
-                                      <ThreeDots
-                                        visible={true}
-                                        height="20"
-                                        width="20"
-                                        color="#000000"
-                                        radius="9"
-                                        ariaLabel="three-dots-loading"
-                                        wrapperStyle={{}}
-                                        wrapperClass=""
-                                      />
-                                    </>
-                                  ) : (
-                                    <>Reject</>
-                                  )}
-                                </Button>
-
-                                {/* <p>{pendingTransactions.pending?.confirmations ?? ''}</p>
-                                <p>{pendingTransactions.rejected?.confirmations}</p> */}
-                              </>
-                            ) : (
-                              <TooltipProvider delayDuration={10}>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <PremiumButton
-                                      onClick={() =>
-                                        handleConfirmTX(pendingTransactions && pendingTransactions.pending?.safeTxHash as string)
-                                      }
-                                      label="Confirm"
-                                      disabled={!checkExecutable}
-                                    // loading={}
-                                    />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {!checkExecutable &&
-                                      "Execute tx with lowest nonce first"}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex flex-col ">
+              authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+                <>
+                  {
+                    // true ? (
+                    (transactionData != null) ? (
+                      <>
+                        {(pendingTransactions != null && isNewTransaction) ? (
+                          //  {/* { true ? ( */}
+                          <>
+                          <div className="flex flex-col gap-10">
                             <div className="flex flex-row gap-10 items-start justify-center px-4">
                               <ClaimableRewardsCard
                                 assets={transformTransactionDataClaimAsset(
                                   transactionData
                                 )}
-                              />
+                                />
                               <DesiredOutputCard
-                                tokenData={transformTransactionDataClaimAsset(
-                                  transactionData
-                                )}
-                                isEditable={true}
+                                tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                                isEditable={false}
+                                />
+                              {/* <ReadonlyDesiredOutputCard
+                              tokenData={transformTransactionDataClaimAndSwapAsset(
+                                transactionData
+                              )}
+                            /> */}
+                            </div>
+                              <div className="flex flex-col justify-center items-center gap-2 my-2">
+                                <div className="">{pendingTransactions.rejected && <p>{`Total confirmation on Rejcted TX  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions.pending && <p>{`Total confirmation on Rejcted TX  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
+                              </div>
+                            </div>
+                            <div className="w-full p-4 flex justify-center items-center gap-5">
+                              {!isConfirmed ? (
+                                <>
+                                  <PremiumButton
+                                    onClick={() =>
+                                      handleSignTx(false, pendingTransactions)
+                                    }
+                                    hide={checkIfSigned(pendingTransactions, activeAccount)}
+                                    label="Sign"
+                                    loading={loadingState.sign}
+                                  />
+                                  <Button
+                                    variant="destructive"
+                                    hidden={checkIfRejected(pendingTransactions, activeAccount)}
+                                    onClick={() =>
+                                      handleSignTx(true, pendingTransactions)
+                                    }
+
+                                  >
+                                    {loadingState.reject ? (
+                                      <>
+                                        <ThreeDots
+                                          visible={true}
+                                          height="20"
+                                          width="20"
+                                          color="#000000"
+                                          radius="9"
+                                          ariaLabel="three-dots-loading"
+                                          wrapperStyle={{}}
+                                          wrapperClass=""
+                                        />
+                                      </>
+                                    ) : (
+                                      <>Reject</>
+                                    )}
+                                  </Button>
+
+                                </>
+                              ) : (
+                                <TooltipProvider delayDuration={10}>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <PremiumButton
+                                        onClick={() =>
+                                          handleConfirmTX(pendingTransactions && pendingTransactions.pending?.safeTxHash as string)
+                                        }
+                                        label="Confirm"
+                                        disabled={!checkExecutable}
+                                      // loading={}
+                                      />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {!checkExecutable &&
+                                        "Execute tx with lowest nonce first"}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex flex-col ">
+                              <div className="flex flex-row gap-10 items-start justify-center px-4">
+                                <ClaimableRewardsCard
+                                  assets={transformTransactionDataClaimAsset(
+                                    transactionData
+                                  )}
+                                />
+                                <DesiredOutputCard
+                                  tokenData={transformTransactionDataClaimAsset(
+                                    transactionData
+                                  )}
+                                  isEditable={true}
+                                />
+                              </div>
+                            </div>
+                            <div className="flex justify-center py-4">
+                              <PremiumButton
+                                onClick={() =>
+                                  handleSignTx(false, undefined, true)
+                                  // handleSwap()
+                                }
+                                label="Swap"
+                                // disabled={transactionQueue?.count > 0 || true}
+                                loading={loadingState.swap}
                               />
                             </div>
-                          </div>
-                          <div className="flex justify-center py-4">
-                            <PremiumButton
-                              onClick={() =>
-                                handleSignTx(false, undefined, true)
-                                // handleSwap()
-                              }
-                              label="Swap"
-                              // disabled={transactionQueue?.count > 0 || true}
-                              loading={loadingState.swap}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    isFetchedData ? (
-                      <div>
-                        <Loader data="Fetching transaction data..." />
-                      </div>
-                    ) : <>
-                      <ErrorCreateTxPage
-                        errorTitle={"401: Unauthorized Access"}
-                        errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
-                        setter={setIsNewTransaction}
-                        loader={setIsFetchedData}
-                      />
-                    </>
-                  )
-                }
-              </>
-            ) : (
-              <ErrorPage
-                errorTitle={"401: Unauthorized Access"}
-                errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
-              />
-            ) 
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      isFetchedData ? (
+                        <div>
+                          <Loader data="Fetching transaction data..." />
+                        </div>
+                      ) : <>
+                        <ErrorCreateTxPage
+                          errorTitle={"401: Unauthorized Access"}
+                          errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+                          setter={setIsNewTransaction}
+                          loader={setIsFetchedData}
+                        />
+                      </>
+                    )
+                  }
+                </>
+              ) : (
+                <ErrorPage
+                  errorTitle={"401: Unauthorized Access"}
+                  errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+                />
+              )
             ) : (
               <Loader data="Authenticating..." />
             )

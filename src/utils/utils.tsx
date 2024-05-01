@@ -598,7 +598,7 @@ export const reSimulateTx = async (
 
 }
 
-export const getPendingTransaction =
+export const getPendingTransaction_null =
   async (): Promise<PendingTxData | null> => {
     try {
       const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
@@ -679,14 +679,15 @@ export const getPendingTransaction =
 
   };
 
-export const getPendingTransaction_null =
+export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 
 
     // Wait for the Promise to resolve, but do nothing with the result
     await new Promise((resolve) => resolve(null));
-    return null;
+    return dummyData;
+    // return null;
   }
 
 
