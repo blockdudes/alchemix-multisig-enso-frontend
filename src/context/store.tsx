@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { JsonRpcSigner, ethers } from 'ethers';
 import anvil from "@/utils/anvil";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
-import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, SAFE_API_URL, SAFE_OWNER, SAFE_TRANSACTION_ORIGIN, multiSigAddress } from "@/lib/constants";
+import { CHAIN_ID, OWNER1_ADDRESS, RPC_URL, SAFE_OWNER, SAFE_TRANSACTION_ORIGIN, multiSigAddress } from "@/lib/constants";
 import SafeApiKit from "@safe-global/api-kit";
 import { Assets, PendingTxData, TokenData } from "@/Types";
 import { EndSimulation, buildClaimAndSwapTx, getPendingTransaction, reSimulateTx } from "@/utils/utils";
@@ -21,17 +21,19 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const [safe, setSafe] = useState<Safe | null>(null);
     const [safeApiKit, setSafeApiKit] = useState<SafeApiKit | null>(null);
     const dummyData = [
-        { id: "0" ,tokenName: 'USDC', amount: 0, tick: false, dollarValue: 0 },
+        { id: "0" ,tokenName: 'USDC', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
+        { id: "1" ,tokenName: 'USDC2', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
+        { id: "2" ,tokenName: 'USDC3', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
         // { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
         // { token: 'Btc in unisat', balance: 0, selected: false,dollarValue: 0 },
     ]
-    const [desiredoutput, setDesiredOutput] = useState<Assets[]>(dummyData)
+    const [outputAssets, setOutputAssets] = useState<Assets[]>(dummyData)
 
 
     const [transactionData, setTransactionData] = useState<any>(null);
     const [pendingTransactions, setPendingTransactions] = useState<any>(null);
     const [isFetchedData, setIsFetchedData] = useState<boolean>(false);
-    const [isNewTransaction, setIsNewTransaction] = useState<boolean>(true);
+    const [isNewTransaction, setIsNewTransaction] = useState<boolean>(false);
     const { toast } = useToast();
 
      // button loading
@@ -101,6 +103,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
                 const SAFE_OWNER: string = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
+                const CHAIN_ID: string = "1"; // todo: remove this
                 const result = await buildClaimAndSwapTx(
                     CHAIN_ID,
                     multiSigAddress,
@@ -124,6 +127,10 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+
+    const simulateOutputAssets = async (outputAssets: Assets[]) => {
+      
+    }
     const handleConfirmTX = async (safeTxHash: string) => {
         try {
             const safeTransaction = safeApiKit && await safeApiKit.getTransaction(safeTxHash);
@@ -157,7 +164,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     
           if (!isRejected && (pendingTransactions || isNewTx)) {
             if (pendingTxData === undefined && isNewTx) {
-              if (!desiredoutput.some(item => item.tick)) {
+              if (!outputAssets.some(item => item.tick)) {
                 toast({
                   variant: "default",
                   className: "bg-red-500 text-white",
@@ -319,7 +326,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
 
     return (
         <appState.Provider value={{
-            safeApiKit, clientSigner, rpcSigner, ethAdapter, safe, desiredoutput, setDesiredOutput,
+            safeApiKit, clientSigner, rpcSigner, ethAdapter, safe, outputAssets, setOutputAssets,
             transactionData, setTransactionData, pendingTransactions, setPendingTransactions, isFetchedData, setIsFetchedData, fetchdata,
             isNewTransaction, setIsNewTransaction, handleConfirmTX ,handleSignTx, loadingState, setButtonLoading
         }}>

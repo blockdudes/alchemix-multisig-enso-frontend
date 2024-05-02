@@ -109,11 +109,11 @@ const claimRewardData = (): EnsoAction[] => {
 
 export const usdcSwapData = (
   assetChanges: AssetChanges,
-  safeAddress: string,
+  // safeAddress: string,
   ensoWalletAddress: string
 ): EnsoAction[] => {
   try {
-    const usdcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    const usdcAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
     const output: EnsoAction[] = [];
     for (const [token, changes] of Object.entries(assetChanges)) {
       const amount = (changes.rawAmount).toString(); // todo: change this divide only used because enso route function is failing
@@ -158,6 +158,7 @@ const ensoBuildTx = async (
 
     return txData;
   } catch (error) {
+    console.log(error)
     throw new Error("Error building transaction")
   }
 
@@ -235,7 +236,8 @@ interface EnsoTx {
 export const buildClaimAndSwapTx = async (
   chainId: string,
   safeAddress: string,
-  safeOwner: string
+  safeOwner: string,
+  simulateClaimAndSwapBoth: boolean = false
 ): Promise<EnsoTx> => {
 
   try {
@@ -272,7 +274,6 @@ export const buildClaimAndSwapTx = async (
 
     const swapData = usdcSwapData(
       multisigClaimAssetChanges,
-      safeAddress,
       ensoWalletAddress
     );
 
@@ -282,6 +283,10 @@ export const buildClaimAndSwapTx = async (
       safeAddress,
       chainId
     );
+
+      let multisigClaimAndSwapAssetChanges = {};
+
+      if(simulateClaimAndSwapBoth){
 
     const simulateEnsoClaimAndSwapTxData = await simulateTx(
       chainId,
@@ -296,15 +301,16 @@ export const buildClaimAndSwapTx = async (
       simulateEnsoClaimAndSwapTxData
     );
 
-    const multisigAssetChanges = assetChanges[safeAddress];
+     multisigClaimAndSwapAssetChanges = assetChanges[safeAddress];
 
+      }
     const outputTx = {
       data: ensoClaimAndSwapTxData.tx.data,
       to: ensoClaimAndSwapTxData.tx.to,
       value: ensoClaimAndSwapTxData.tx.value,
       assetChanges: {
         claim: multisigClaimAssetChanges,
-        claimAndSwap: multisigAssetChanges,
+        claimAndSwap: multisigClaimAndSwapAssetChanges,
       },
     };
 
@@ -500,7 +506,8 @@ const processAssetChanges = (
   const rawAmount = BigInt(changes.raw_amount);
   const toAddress = changes.to;
   const fromAddress = changes.from;
-  const symbol = changes.token_info.symbol.toUpperCase();
+  const symbol = changes.token_info?.symbol?.toUpperCase() || 'UNKWN';
+
 
   if (changes.type === "Transfer" || changes.type === "Mint") {
     updatedAssetChanges = updateAssetChanges(
@@ -605,7 +612,6 @@ export const getPendingTransaction_null =
 
       const safeApiKit = new SafeApiKit({
         chainId: (await ethersProvider.getNetwork()).chainId,
-        // txServiceUrl: SAFE_API_URL
       });
 
       const checksum_multisig = ethers.getAddress(multiSigAddress);
@@ -701,14 +707,17 @@ export const getPendingTransaction =
       amount: assetData.amount || 0,
       tick: !!assetData.amount,
       dollarValue: assetData.dollarValue || 0,
-      tokenName: assetData.symbol || ""
+      tokenName: assetData.symbol || "",
+      percentage: 0
     }));
   };
   
 
   export const transformTransactionDataClaimAndSwapAsset = (transactionData: any) => {
     const claimAndSwapAssets = transactionData && transactionData.assetChanges?.claimAndSwap;
+
     if (!claimAndSwapAssets) return []; // Return an empty array if no assets are present
+    const totalDollarValue: number = Object.values(claimAndSwapAssets).reduce((total: number, asset: any) => total + asset.dollarValue, 0);
   
     // Filter and transform claim and swap assets directly from the data
     const outputTransformedData = Object.entries(claimAndSwapAssets)
@@ -718,6 +727,7 @@ export const getPendingTransaction =
         amount: assetData.amount || 0,
         dollarValue: assetData.dollarValue || 0,
         tick: assetData.amount > 0.001,
+        percentage: (assetData.dollarValue || 0) / totalDollarValue
       }))
       .filter(asset => asset.tick); // Filter out assets below the threshold of 0.001 amount
   

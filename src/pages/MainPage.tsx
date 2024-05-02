@@ -78,6 +78,9 @@ export const MainPage = () => {
   const activeAccount = useActiveAccount();
 
 
+  const [needSimulation, setNeedSimulation] = useState<boolean>(false);
+
+
   const [isAuthorizedUser, setIsAuthorizedUser] = useState<boolean>(false);
   const [checkExecutable, setCheckExecutable] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -87,8 +90,9 @@ export const MainPage = () => {
   const chainID = useActiveWalletChain();
 
 
-  const testOwner: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
-  const supportedChains = { 1: 'Ethereum', 11155111: 'Sepolia' };
+  const testOwner: String = "0xddf809c183EA9e5a268fFfEe5a6C26fc6e2fc525";
+  const supportedChains = { 11155111: 'Sepolia' };
+  // const supportedChains = { 1: 'Ethereum'};
 
 
   const isChainSupported = () => {
@@ -170,8 +174,8 @@ export const MainPage = () => {
                             /> */}
                             </div>
                               <div className="flex flex-col justify-center items-center gap-2 my-2">
-                                <div className="">{pendingTransactions.rejected && <p>{`Total confirmation on Rejcted TX  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
-                                <div className="">{pendingTransactions.pending && <p>{`Total confirmation on Pending TX  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions.rejected && <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions.pending && <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
                               </div>
                             </div>
                             <div className="w-full p-4 flex justify-center items-center gap-5">
@@ -248,6 +252,8 @@ export const MainPage = () => {
                                     transactionData
                                   )}
                                   isEditable={true}
+                                  needSimulation={needSimulation}
+                                  setNeedSimulation={setNeedSimulation}
                                 />
                               </div>
                             </div>
@@ -272,8 +278,8 @@ export const MainPage = () => {
                         </div>
                       ) : <>
                         <ErrorCreateTxPage
-                          errorTitle={"401: Unauthorized Access"}
-                          errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+                          errorTitle={"Failed Tx"}
+                          errorDescription={"Failed Simulating the Old Pending tx, please create new replacement tx"}
                           setter={setIsNewTransaction}
                           loader={setIsFetchedData}
                         />
