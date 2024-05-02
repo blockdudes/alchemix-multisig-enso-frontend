@@ -171,7 +171,7 @@ export const MainPage = () => {
                             </div>
                               <div className="flex flex-col justify-center items-center gap-2 my-2">
                                 <div className="">{pendingTransactions.rejected && <p>{`Total confirmation on Rejcted TX  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
-                                <div className="">{pendingTransactions.pending && <p>{`Total confirmation on Rejcted TX  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions.pending && <p>{`Total confirmation on Pending TX  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
                               </div>
                             </div>
                             <div className="w-full p-4 flex justify-center items-center gap-5">
