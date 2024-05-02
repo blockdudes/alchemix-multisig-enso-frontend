@@ -84,6 +84,7 @@ export const MainPage = () => {
 
 
   const [needSimulation, setNeedSimulation] = useState<boolean>(false);
+  const [isStatus, setStatus] = useState<string>("disconnected");
 
 
   const [isAuthorizedUser, setIsAuthorizedUser] = useState<boolean>(false);
@@ -93,6 +94,8 @@ export const MainPage = () => {
   const [isSimulating, setIsSimulating] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
 
+
+  console.log(walletConnectionStatus)
   const { toast } = useToast();
   const chainID = useActiveWalletChain();
 
@@ -119,13 +122,18 @@ export const MainPage = () => {
 
     setIsSimulating(true)
     try {
-    const result: EnsoTx = await buildClaimAndSwapTx( chainId, safeAddress, safeOwner, simulateClaimAndSwapBoth);
+      const result: EnsoTx = await buildClaimAndSwapTx(chainId, safeAddress, safeOwner, simulateClaimAndSwapBoth);
 
-    const simulatedData = transformTransactionDataClaimAndSwapAsset(result)
-    setOutputAssets(simulatedData);
-    setNeedSimulation(false);
-    console.log(result)
+      const simulatedData = transformTransactionDataClaimAndSwapAsset(result)
+      setOutputAssets(simulatedData);
+      setNeedSimulation(false);
+      console.log(result)
     } catch (error) {
+      toast({
+        variant: "default",
+        className: "bg-red-500 text-white",
+        title: "Error in simulating Tx.",
+      });
       throw new Error("Error in simulating");
     }
     finally {
@@ -135,7 +143,7 @@ export const MainPage = () => {
     //set output data
   }
 
-  useEffect(() =>  {
+  useEffect(() => {
     try {
       safe
         .getOwners()
@@ -171,26 +179,30 @@ export const MainPage = () => {
       checkIfConfirmed(pendingTransactions, setIsConfirmed);
     }
 
+    console.log(pendingTransactions,pendingTransactions != null , isNewTransaction)
+
   }, [isNewTransaction, activeAccount, authorizedUsers]);
 
 
-  return (
-    <>
-      {walletConnectionStatus === "connected" ? (
-        <>
-          {!isChainSupported() && <ChainAlert />}
-          <Navbar />
-          {
-            isAuthorizedUser ? (
-              // true ? (
-              authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+  if (walletConnectionStatus == "connecting")
+    return <Loader data="Authenticating..." />
+
+   if (walletConnectionStatus == "connected")
+    return (
+      <>
+            <Navbar />
+        {walletConnectionStatus === "connected" && authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+          <>
+            {!isChainSupported() && <ChainAlert />}
+            {
+              // authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+              isAuthorizedUser ? (
                 <>
                   {
                     // true ? (
                     (transactionData != null) ? (
                       <>
                         {(pendingTransactions != null && isNewTransaction) ? (
-                          //  {/* { true ? ( */}
                           <>
                             <div className="flex flex-col gap-10">
                               <div className="flex flex-row gap-10 items-start justify-center px-4">
@@ -204,14 +216,14 @@ export const MainPage = () => {
                                   isEditable={false}
                                 />
                                 {/* <ReadonlyDesiredOutputCard
-                              tokenData={transformTransactionDataClaimAndSwapAsset(
-                                transactionData
-                              )}
-                            /> */}
+                            tokenData={transformTransactionDataClaimAndSwapAsset(
+                              transactionData
+                            )}
+                          /> */}
                               </div>
                               <div className="flex flex-col justify-center items-center gap-2 my-2">
-                                <div className="">{pendingTransactions.rejected && <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
-                                <div className="">{pendingTransactions.pending && <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions?.rejected && <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
+                                <div className="">{pendingTransactions?.pending && <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
                               </div>
                             </div>
                             <div className="w-full p-4 flex justify-center items-center gap-5">
@@ -293,9 +305,9 @@ export const MainPage = () => {
                                 />
                               </div>
                             </div>
-                            <div className="flex justify-center py-4 gap-4">
-                            {needSimulation && <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS,true ) } >
-                              { isSimulating ?  <ButtonLoading />: "Simulate"  }
+                            <div className="flex justify-center items-center py-4 gap-4">
+                              {needSimulation && <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS, true)} >
+                                {isSimulating ? <ButtonLoading /> : "Simulate"}
                               </Button>}
 
 
@@ -333,14 +345,15 @@ export const MainPage = () => {
                   errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
                 />
               )
-            ) : (
-              <Loader data="Authenticating..." />
-            )
-          }
-        </>
-      ) : (
-        <AuthenticationPage />
-      )}
-    </>
-  );
+            }
+          </>
+        ) : (
+          <Loader data="checking Admin Access..." />
+        )}
+      </>
+    )
+   if (walletConnectionStatus == "disconnected")
+    return <AuthenticationPage />
+
 };
+

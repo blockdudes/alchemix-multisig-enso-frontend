@@ -21,18 +21,19 @@ type DesiredOutputCardProps = {
 };
 
 const DesiredOutputCard = ({
+  tokenData,
   isEditable,
   needSimulation,
   setNeedSimulation,
 }: any) => {
   const { outputAssets, setOutputAssets } = useEthereum();
-  // const [currentData, setCurrentData] = useState(
-  //     isEditable ? desiredoutput : tokenData
-  // );
+  const [currentData, setCurrentData] = useState(
+      isEditable ? outputAssets : tokenData
+  );
+
+
 
   // const [outputAssets, setOutputAssets] = useState<Assets[]>([]);
-  console.log(isEditable)
-  console.log("----->",outputAssets)
 
   const totalBalance: number = outputAssets
     .filter((item: Assets) => item.tick)

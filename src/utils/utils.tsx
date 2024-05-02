@@ -692,8 +692,8 @@ export const getPendingTransaction =
 
     // Wait for the Promise to resolve, but do nothing with the result
     await new Promise((resolve) => resolve(null));
-    return dummyData;
-    // return null;
+    // return dummyData;
+    return null;
   }
 
 

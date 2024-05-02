@@ -33,7 +33,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const [transactionData, setTransactionData] = useState<any>(null);
     const [pendingTransactions, setPendingTransactions] = useState<any>(null);
     const [isFetchedData, setIsFetchedData] = useState<boolean>(false);
-    const [isNewTransaction, setIsNewTransaction] = useState<boolean>(false);
+    const [isNewTransaction, setIsNewTransaction] = useState<boolean>(true);
     const { toast } = useToast();
 
      // button loading
@@ -55,6 +55,8 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (pendingTX && isNewTransaction) {
             try {
+
+              console.log("enterr here")
                 const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
                 const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
                 const txData = {
