@@ -33,7 +33,7 @@ export interface Assets {
   amount: number;
   tick: boolean;
   dollarValue: number;
-
+  percentage?: number;
 }
 
 

@@ -727,7 +727,7 @@ export const getPendingTransaction =
         amount: assetData.amount || 0,
         dollarValue: assetData.dollarValue || 0,
         tick: assetData.amount > 0.001,
-        percentage: (assetData.dollarValue || 0) / totalDollarValue
+        percentage: (assetData.dollarValue || 0) / totalDollarValue * 100
       }))
       .filter(asset => asset.tick); // Filter out assets below the threshold of 0.001 amount
   

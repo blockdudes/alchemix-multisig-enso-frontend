@@ -4,6 +4,7 @@ import DesiredOutputCard from "@/components/ui/DesiredOutputCard";
 import Navbar from "@/components/header/Navbar";
 import PremiumButton from "@/components/ui/PremiumButton";
 import {
+  buildClaimAndSwapTx,
   checkIfConfirmed,
   checkIfRejected,
   checkIfSigned,
@@ -35,10 +36,12 @@ import { ErrorCreateTxPage } from "./ErrorPage";
 
 import ErrorPage from "./ErrorPage";
 import { Button } from "@/components/ui/button";
-import { Assets, PendingTxData, TokenData } from "@/Types";
+import { Assets, EnsoTx, PendingTxData, TokenData } from "@/Types";
 import { useToast } from "@/components/ui/use-toast";
 import ChainAlert from "@/components/ui/Alert";
-
+import { OWNER1_ADDRESS, multiSigAddress } from "@/lib/constants";
+import { ReloadIcon } from "@radix-ui/react-icons"
+import { ButtonLoading } from "@/components/ui/ButtonLoading";
 
 
 export const MainPage = () => {
@@ -47,6 +50,7 @@ export const MainPage = () => {
     safeApiKit,
     ethAdapter,
     safe,
+    setOutputAssets,
     desiredoutput,
     transactionData, setTransactionData, pendingTransactions, setPendingTransactions, isFetchedData, setIsFetchedData,
     fetchdata, isNewTransaction, setIsNewTransaction, handleConfirmTX,
@@ -56,6 +60,7 @@ export const MainPage = () => {
     safeApiKit: SafeApiKit;
     ethAdapter: EthersAdapter;
     safe: Safe;
+    setOutputAssets: React.Dispatch<React.SetStateAction<Assets[]>>;
     desiredoutput: Assets[];
     transactionData: any
     setTransactionData: any;
@@ -85,12 +90,14 @@ export const MainPage = () => {
   const [checkExecutable, setCheckExecutable] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [authorizedUsers, setAuthorizedUsers] = useState<any>(null);
+  const [isSimulating, setIsSimulating] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
+
   const { toast } = useToast();
   const chainID = useActiveWalletChain();
 
 
-  const testOwner: String = "0xddf809c183EA9e5a268fFfEe5a6C26fc6e2fc525";
+  const testOwner: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
   const supportedChains = { 11155111: 'Sepolia' };
   // const supportedChains = { 1: 'Ethereum'};
 
@@ -99,7 +106,36 @@ export const MainPage = () => {
     return supportedChains.hasOwnProperty(chainID?.id ?? '');
   };
 
-  useEffect(() => {
+  const handleSimulate = async (
+    chainId: string,
+    safeAddress: string,
+    safeOwner: string,
+    simulateClaimAndSwapBoth: boolean = false
+  ) => {
+    //build transaction
+    safeAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
+    safeOwner = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
+    chainId = "1"; // todo: remove this
+
+    setIsSimulating(true)
+    try {
+    const result: EnsoTx = await buildClaimAndSwapTx( chainId, safeAddress, safeOwner, simulateClaimAndSwapBoth);
+
+    const simulatedData = transformTransactionDataClaimAndSwapAsset(result)
+    setOutputAssets(simulatedData);
+    setNeedSimulation(false);
+    console.log(result)
+    } catch (error) {
+      throw new Error("Error in simulating");
+    }
+    finally {
+      setIsSimulating(false)
+
+    }
+    //set output data
+  }
+
+  useEffect(() =>  {
     try {
       safe
         .getOwners()
@@ -156,23 +192,23 @@ export const MainPage = () => {
                         {(pendingTransactions != null && isNewTransaction) ? (
                           //  {/* { true ? ( */}
                           <>
-                          <div className="flex flex-col gap-10">
-                            <div className="flex flex-row gap-10 items-start justify-center px-4">
-                              <ClaimableRewardsCard
-                                assets={transformTransactionDataClaimAsset(
-                                  transactionData
-                                )}
+                            <div className="flex flex-col gap-10">
+                              <div className="flex flex-row gap-10 items-start justify-center px-4">
+                                <ClaimableRewardsCard
+                                  assets={transformTransactionDataClaimAsset(
+                                    transactionData
+                                  )}
                                 />
-                              <DesiredOutputCard
-                                tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
-                                isEditable={false}
+                                <DesiredOutputCard
+                                  tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                                  isEditable={false}
                                 />
-                              {/* <ReadonlyDesiredOutputCard
+                                {/* <ReadonlyDesiredOutputCard
                               tokenData={transformTransactionDataClaimAndSwapAsset(
                                 transactionData
                               )}
                             /> */}
-                            </div>
+                              </div>
                               <div className="flex flex-col justify-center items-center gap-2 my-2">
                                 <div className="">{pendingTransactions.rejected && <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
                                 <div className="">{pendingTransactions.pending && <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
@@ -257,11 +293,15 @@ export const MainPage = () => {
                                 />
                               </div>
                             </div>
-                            <div className="flex justify-center py-4">
+                            <div className="flex justify-center py-4 gap-4">
+                            {needSimulation && <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS,true ) } >
+                              { isSimulating ?  <ButtonLoading />: "Simulate"  }
+                              </Button>}
+
+
                               <PremiumButton
                                 onClick={() =>
                                   handleSignTx(false, undefined, true)
-                                  // handleSwap()
                                 }
                                 label="Swap"
                                 // disabled={transactionQueue?.count > 0 || true}

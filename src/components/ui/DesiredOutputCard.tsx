@@ -31,17 +31,18 @@ const DesiredOutputCard = ({
   // );
 
   // const [outputAssets, setOutputAssets] = useState<Assets[]>([]);
-
-  // console.log("----->",currentData)
+  console.log(isEditable)
+  console.log("----->",outputAssets)
 
   const totalBalance: number = outputAssets
     .filter((item: Assets) => item.tick)
     .reduce((acc: number, item: Assets) => acc + item.dollarValue, 0);
 
+    console.log(totalBalance)
   const toggleSwitch = (index: number, checked: CheckedState) => {
     if (checked !== "indeterminate") {
       const selectedAssets = outputAssets.filter((item: Assets) => item.tick);
-      const newPercentage = selectedAssets.length == 0 ? 100  : 0;
+      const newPercentage = selectedAssets.length == 0 ? 100 : 0;
       const newOutputAssets = handleSliderChange(index, newPercentage);
       if (newOutputAssets) {
         console.log(newOutputAssets)
@@ -97,21 +98,21 @@ const DesiredOutputCard = ({
     let totalPercentage = 0;
     const updatedOutputAssets = outputAssets.map((item: Assets) => {
       if (item.id === outputAssets[index].id) {
-        if(newPercentage >= 0){
-            totalPercentage += newPercentage;
-            return {
-              ...item,
-              percentage: newPercentage,
-            };
+        if (newPercentage >= 0) {
+          totalPercentage += newPercentage;
+          return {
+            ...item,
+            percentage: newPercentage,
+          };
         }
       } else if (item.tick) {
-        const newItemPercentage = item.percentage - (percentagePerAsset);
-        if(newItemPercentage >= 0){
-            totalPercentage += newItemPercentage;
-        return {
-          ...item,
-          percentage: newItemPercentage,
-        };
+        const newItemPercentage = item.percentage !== undefined ? item.percentage - percentagePerAsset : 0;
+        if (newItemPercentage >= 0) {
+          totalPercentage += newItemPercentage;
+          return {
+            ...item,
+            percentage: newItemPercentage,
+          };
         }
       }
       return item;
@@ -162,8 +163,8 @@ const DesiredOutputCard = ({
                     )}
                     <div className="table-cell">Token</div>
                     {/* {!isEditable && <div className="table-cell">Balance</div>} */}
-                    <div className="table-cell">Balance</div>
-                    <div className="table-cell">Amount($)</div>
+                    <div className="table-cell w-1/4">Balance</div>
+                    <div className="table-cell w-1/4">Amount($)</div>
                   </div>
                   <hr />
                   <ScrollArea className="h-60 w-full scroll-px-py">
@@ -178,60 +179,61 @@ const DesiredOutputCard = ({
                                   <div className="table-cell ">
                                     {isEditable && (
                                       <Checkbox
-                                        id={`asset-${index}`}
+                                        id={index.toString()}
                                         checked={item.tick}
                                         onCheckedChange={(state) =>
                                           toggleSwitch(index, state)
                                         }
-                                        // disabled={totalBalance == 0}
+                                      // disabled={totalBalance == 0}
                                       />
                                     )}
                                   </div>
                                 </>
                               )}
-                              <div className="table-cell ">
+                              <div className="table-cell w-1/4">
                                 {item.tokenName}
                               </div>
 
-                                <div className="table-cell ">
-                                  {needSimulation ?"-" :  item.amount.toFixed(2)}
-                                </div>
-                                <div className="table-cell ">
-                                  {needSimulation ?"-" : "$"+item.dollarValue.toFixed(2)}
-                                </div>
-               
+                              <div className="table-cell w-1/4">
+                                {needSimulation ? "-" : item.amount.toFixed(2)}
+                              </div>
+                              <div className="table-cell w-1/4">
+                                {needSimulation ? "-" : "$" + item.dollarValue.toFixed(2)}
+                              </div>
+
                             </div>
                             {isEditable && (
                               <div>
                                 <div
-                                className={`flex flex-row mt-1 gap-2 items-right justify-end`}
-                              >
-                          
-                                {
-                                  <Slider
-                                    className="w-[80%]"
-                                    key={index}
-                                    defaultValue={[item.percentage]}
-                                    // defaultValue={[item.amount / (totalBalance ?? 1) * 100]}
-                                    max={100}
-                                    min={1}
-                                    step={1}
-                                    value={[item.percentage]}
-                                    // onValueChange={(newValue) => {console.log(`valueeech`, newValue);}}
-                                    // onValueCommit={(newValue) => {console.log(`valueeeco`, newValue);}}
-                                    onValueChange={(newValue) =>
-                                      handleSliderChange(index, newValue[0])
-                                    }
-                                    disabled={!item.tick}
+                                  className={`flex flex-row mt-1 gap-2 items-right justify-end`}
+                                >
 
-                                  />
-                                }
-      <div className="text-xs text-gray-400 w-[10%]">
-                                    {item.percentage.toFixed(0)}%
+                                  {
+                                    <Slider
+                                      className="w-[70%]"
+                                      key={index}
+                                      defaultValue={[item.percentage || 0]}
+                                      // defaultValue={[item.amount / (totalBalance ?? 1) * 100]}
+                                      max={100}
+                                      min={1}
+                                      step={1}
+                                      value={[item.percentage || 0]}
+                                      // onValueChange={(newValue) => {console.log(`valueeech`, newValue);}}
+                                      // onValueCommit={(newValue) => {console.log(`valueeeco`, newValue);}}
+                                      onValueChange={(newValue) =>
+                                        handleSliderChange(index, newValue[0])
+                                      }
+                                      disabled={!item.tick}
+
+                                    />
+                                  }
+                                  <div className="text-xs text-gray-400 w-[10%]">
+                                    {item.percentage?.toFixed(0) ?? 0}%
+                                    {/* {(item.dollarValue/ totalBalance * 100 )?.toFixed(0) ?? 0}% */}
                                   </div>
+                                </div>
                               </div>
-                              </div>
-                              
+
                             )}
                           </div>
                         </div>
@@ -246,10 +248,10 @@ const DesiredOutputCard = ({
             <Button className="w-full text-center cursor-auto pointer-events-none">
               Total value:{" "}
               <span className="ml-5">
-                
+
                 {needSimulation
                   ? "Please Simulate"
-                  : "$"+(totalBalance ?? 0).toFixed(2)}
+                  : "$" + (totalBalance ?? 0).toFixed(2)}
               </span>
             </Button>
           </CardFooter>
@@ -257,6 +259,9 @@ const DesiredOutputCard = ({
       </div>
     </>
   );
+
+  
+  
 
   //   return (
   //     <>
