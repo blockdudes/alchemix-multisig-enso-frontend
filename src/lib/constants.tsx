@@ -3,8 +3,8 @@ export const SAFE_TRANSACTION_ORIGIN: string  = "ENSO"
 
 
 const ETH_FORK_RPC_URL: string ="http://127.0.0.1:8545"
-const ETH_RPC_URL: string ="https://rpc.ankr.com/eth"
-export const SEPOLIA_RPC_URL: string ="https://rpc.ankr.com/eth_sepolia/c2cce5053643412c0d2af683155ce0a76b722563636c98b2079332367382b768"
+const ETH_RPC_URL: string ="https://eth-mainnet.g.alchemy.com/v2/-m4Ia4fqqXSQZWeEfCjNcglf8j0slSgM"
+export const SEPOLIA_RPC_URL: string ="https://eth-sepolia.g.alchemy.com/v2/OZzkkWOJVLQL81Aph26gi1VjUEeADPvy"
 export const RPC_URL: string = ETH_RPC_URL
 
 // export const SAFE_API_URL : string = "http://192.168.1.4:8000/api";

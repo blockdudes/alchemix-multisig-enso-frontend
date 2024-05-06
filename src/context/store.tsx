@@ -22,8 +22,8 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     const [safeApiKit, setSafeApiKit] = useState<SafeApiKit | null>(null);
     const dummyData = [
         { id: "0" ,tokenName: 'USDC', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
-        { id: "1" ,tokenName: 'USDC2', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
-        { id: "2" ,tokenName: 'USDC3', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
+        // { id: "1" ,tokenName: 'USDC2', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
+        // { id: "2" ,tokenName: 'USDC3', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
         // { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
         // { token: 'Btc in unisat', balance: 0, selected: false,dollarValue: 0 },
     ]
@@ -42,6 +42,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
         sign: false,
         reject: false,
     });
+    // useEffect(() => {}
 
     const setButtonLoading = (type: string, isLoading: boolean) =>
         setLoadingState((prev) => ({ ...prev, [type]: isLoading }));
@@ -59,6 +60,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
               console.log("enterr here")
                 const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
                 const SAFE_OWNER = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
+                const CHAIN_ID = "1"
                 const txData = {
                     chainId: CHAIN_ID,
                     data: pendingTX?.pending?.data,
@@ -131,7 +133,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     const simulateOutputAssets = async (outputAssets: Assets[]) => {
-      
+
     }
     const handleConfirmTX = async (safeTxHash: string) => {
         try {
@@ -230,14 +232,17 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     
           if (signTransaction) {
             let safeTxHash = "";
-            if (signTransaction.data) {
+            if ('safe' in signTransaction) {
+              safeTxHash = (signTransaction as SafeMultisigTransactionResponse)
+                .safeTxHash;
+              
+            } else {
+              console.log("sdfsdf",signTransaction)
               safeTxHash = safe && await safe.getTransactionHash(
                 signTransaction as SafeTransaction
               ) || "";
-            } else {
-              safeTxHash = (signTransaction as SafeMultisigTransactionResponse)
-                .safeTxHash;
             }
+            console.log(safeTxHash)
     
             safe && ethAdapter && await safe.connect({
               ethAdapter: ethAdapter,

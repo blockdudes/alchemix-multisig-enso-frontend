@@ -27,11 +27,18 @@ const DesiredOutputCard = ({
   setNeedSimulation,
 }: any) => {
   const { outputAssets, setOutputAssets } = useEthereum();
-  const [currentData, setCurrentData] = useState(
-      isEditable ? outputAssets : tokenData
-  );
+//   const [currentData, setCurrentData] = useState(
+//       isEditable ? assets : tokenData
+//   );
 
-
+    useEffect(() => {
+      if(!isEditable){
+        setOutputAssets(tokenData)
+      }
+    
+     
+    }, [])
+    
 
   // const [outputAssets, setOutputAssets] = useState<Assets[]>([]);
 

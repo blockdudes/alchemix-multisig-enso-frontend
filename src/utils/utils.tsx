@@ -110,7 +110,7 @@ const claimRewardData = (): EnsoAction[] => {
 export const usdcSwapData = (
   assetChanges: AssetChanges,
   // safeAddress: string,
-  ensoWalletAddress: string
+  // ensoWalletAddress: string
 ): EnsoAction[] => {
   try {
     const usdcAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
@@ -118,9 +118,9 @@ export const usdcSwapData = (
     for (const [token, changes] of Object.entries(assetChanges)) {
       const amount = (changes.rawAmount).toString(); // todo: change this divide only used because enso route function is failing
       // use token address and amount to create the ensorouteaction
-      const approveToken = approveTokenData(token, ensoWalletAddress, amount);
-      output.push(approveToken);
-      if (token != "0xd533a949740bb3306d119cc777fa900ba034cd52") {
+      // const approveToken = approveTokenData(token, ensoWalletAddress, amount);
+      // output.push(approveToken);
+      // if (token != "0xd533a949740bb3306d119cc777fa900ba034cd52") {
         output.push({
           protocol: "enso",
           action: "route",
@@ -128,9 +128,10 @@ export const usdcSwapData = (
             tokenIn: token,
             tokenOut: usdcAddress,
             amountIn: amount,
+            ignoreAggregators: ["enso"]
           },
         });
-      }
+      // }
     }
     return output
   } catch (error) {
@@ -241,7 +242,7 @@ export const buildClaimAndSwapTx = async (
 ): Promise<EnsoTx> => {
 
   try {
-    const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
+    // const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
 
     const claimRewardEnsoData = claimRewardData();
 
@@ -274,7 +275,7 @@ export const buildClaimAndSwapTx = async (
 
     const swapData = usdcSwapData(
       multisigClaimAssetChanges,
-      ensoWalletAddress
+      // ensoWalletAddress
     );
 
     // [...claimRewardEnsoData, ...swapData],
@@ -605,7 +606,7 @@ export const reSimulateTx = async (
 
 }
 
-export const getPendingTransaction_null =
+export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     try {
       const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
@@ -648,7 +649,7 @@ export const getPendingTransaction_null =
 
           const isRejected = tx.data == null && tx.value === "0";
 
-          if (!isRejected) {
+          if (!isRejected && pendingTx == undefined) {
             pendingTx = tx;
           } else {
             rejectedTx = tx;
@@ -676,6 +677,7 @@ export const getPendingTransaction_null =
       if (pendingTxs.length === 0) {
         return null;
       } else {
+        console.log(pendingTxs)
         return pendingTxs[0];
       }
     } catch (error) {
@@ -685,7 +687,7 @@ export const getPendingTransaction_null =
 
   };
 
-export const getPendingTransaction =
+export const getPendingTransactionO =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 
@@ -726,7 +728,7 @@ export const getPendingTransaction =
         tokenName: assetData.symbol || "",
         amount: assetData.amount || 0,
         dollarValue: assetData.dollarValue || 0,
-        tick: assetData.amount > 0.001,
+        tick: assetData.amount > 0.1,
         percentage: (assetData.dollarValue || 0) / totalDollarValue * 100
       }))
       .filter(asset => asset.tick); // Filter out assets below the threshold of 0.001 amount
@@ -783,6 +785,8 @@ export const getPendingTransaction =
     if (txnData) {
       const confirmations_given = txnData?.confirmations.length;
       const confirmations_required = txnData?.confirmationsRequired;
+      console.log(confirmations_given)
+      console.log(confirmations_required)
       confirmed = confirmations_given >= confirmations_required;
     }
 

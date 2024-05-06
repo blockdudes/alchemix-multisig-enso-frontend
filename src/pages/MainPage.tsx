@@ -100,7 +100,7 @@ export const MainPage = () => {
   const chainID = useActiveWalletChain();
 
 
-  const testOwner: String = "0x7962eBE98550d53A3608f9caADaCe72ef30De68C";
+  const testOwner: String = "0xddf809c183EA9e5a268fFfEe5a6C26fc6e2fc525";
   const supportedChains = { 11155111: 'Sepolia' };
   // const supportedChains = { 1: 'Ethereum'};
 
@@ -125,6 +125,7 @@ export const MainPage = () => {
       const result: EnsoTx = await buildClaimAndSwapTx(chainId, safeAddress, safeOwner, simulateClaimAndSwapBoth);
 
       const simulatedData = transformTransactionDataClaimAndSwapAsset(result)
+      setTransactionData(result);
       setOutputAssets(simulatedData);
       setNeedSimulation(false);
       console.log(result)
@@ -153,7 +154,6 @@ export const MainPage = () => {
         })
         .catch((error) => console.error("Error:", error));
 
-      isExecutable();
     } catch (error) {
       toast({
         title: error as string,
@@ -165,10 +165,20 @@ export const MainPage = () => {
   const isExecutable = async () => {
     const nonce = await safe.getNonce();
     const ourNonce = pendingTransactions && pendingTransactions.pending?.nonce;
+    console.log(nonce, ourNonce)
     setCheckExecutable(nonce === ourNonce);
     //  return nonce === ourNonce
   };
+  useEffect(() => {
+    checkIfConfirmed(pendingTransactions, setIsConfirmed);
 
+    isExecutable();
+  
+    // return () => {
+    //   second
+    // }
+  }, [pendingTransactions])
+  
   useEffect(() => {
     if (
       authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase())
@@ -176,7 +186,6 @@ export const MainPage = () => {
     ) {
       setIsAuthorizedUser(true);
       fetchdata()
-      checkIfConfirmed(pendingTransactions, setIsConfirmed);
     }
 
     console.log(pendingTransactions,pendingTransactions != null , isNewTransaction)
@@ -306,19 +315,19 @@ export const MainPage = () => {
                               </div>
                             </div>
                             <div className="flex justify-center items-center py-4 gap-4">
-                              {needSimulation && <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS, true)} >
+                              {needSimulation ? <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS, true)} >
                                 {isSimulating ? <ButtonLoading /> : "Simulate"}
-                              </Button>}
-
-
-                              <PremiumButton
+                              </Button>:  <PremiumButton
                                 onClick={() =>
                                   handleSignTx(false, undefined, true)
                                 }
                                 label="Swap"
                                 // disabled={transactionQueue?.count > 0 || true}
                                 loading={loadingState.swap}
-                              />
+                              />}
+
+
+                             
                             </div>
                           </>
                         )}
@@ -348,7 +357,7 @@ export const MainPage = () => {
             }
           </>
         ) : (
-          <Loader data="checking Admin Access..." />
+          <Loader data="Authenticating..." />
         )}
       </>
     )
