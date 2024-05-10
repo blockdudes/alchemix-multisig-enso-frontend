@@ -7,7 +7,6 @@ export interface TokenData {
   dollarValue: number;
 }
 
-
 export interface AssetChanges {
   [token: string]: {
     amount: number;
@@ -25,8 +24,6 @@ export interface EnsoTx {
   };
 }
 
-
-
 export interface Assets {
   id: string;
   tokenName: string;
@@ -36,11 +33,9 @@ export interface Assets {
   percentage?: number;
 }
 
-
 export interface DesiredOutputCardProps {
   totalBalance?: number;
 }
-
 
 export interface PendingTxData {
   pending?: SafeMultisigTransactionResponse;

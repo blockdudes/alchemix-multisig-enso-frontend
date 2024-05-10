@@ -1,6 +1,6 @@
-import * as React from "react"
+import * as React from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,18 +8,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Connect } from '@/hooks/Connect'
-
+} from "@/components/ui/select";
+import { Connect } from "@/hooks/Connect";
 
 export default function LoginPage() {
   return (
@@ -28,11 +27,10 @@ export default function LoginPage() {
         <CardTitle>Log In</CardTitle>
         <CardDescription>connect to visit admin dashboard.</CardDescription>
       </CardHeader>
-      <CardContent>
-      </CardContent>
+      <CardContent></CardContent>
       <CardFooter className="flex justify-center mt-28">
-        <Connect/>
+        <Connect />
       </CardFooter>
     </Card>
-  )
+  );
 }

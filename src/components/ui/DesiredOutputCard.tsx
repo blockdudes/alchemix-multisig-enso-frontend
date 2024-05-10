@@ -27,18 +27,15 @@ const DesiredOutputCard = ({
   setNeedSimulation,
 }: any) => {
   const { outputAssets, setOutputAssets } = useEthereum();
-//   const [currentData, setCurrentData] = useState(
-//       isEditable ? assets : tokenData
-//   );
+  //   const [currentData, setCurrentData] = useState(
+  //       isEditable ? assets : tokenData
+  //   );
 
-    useEffect(() => {
-      if(!isEditable){
-        setOutputAssets(tokenData)
-      }
-    
-     
-    }, [])
-    
+  useEffect(() => {
+    if (!isEditable) {
+      setOutputAssets(tokenData);
+    }
+  }, []);
 
   // const [outputAssets, setOutputAssets] = useState<Assets[]>([]);
 
@@ -46,14 +43,14 @@ const DesiredOutputCard = ({
     .filter((item: Assets) => item.tick)
     .reduce((acc: number, item: Assets) => acc + item.dollarValue, 0);
 
-    console.log(totalBalance)
+  console.log(totalBalance);
   const toggleSwitch = (index: number, checked: CheckedState) => {
     if (checked !== "indeterminate") {
       const selectedAssets = outputAssets.filter((item: Assets) => item.tick);
       const newPercentage = selectedAssets.length == 0 ? 100 : 0;
       const newOutputAssets = handleSliderChange(index, newPercentage);
       if (newOutputAssets) {
-        console.log(newOutputAssets)
+        console.log(newOutputAssets);
         newOutputAssets[index].tick = checked;
         setOutputAssets(newOutputAssets);
       }
@@ -94,7 +91,7 @@ const DesiredOutputCard = ({
     const diff = newPercentage - previousPercentage;
 
     const selectedAssets = outputAssets.filter(
-      (item: Assets) => item.tick && item.id !== outputAssets[index].id
+      (item: Assets) => item.tick && item.id !== outputAssets[index].id,
     );
     const selectedAssetsCount =
       selectedAssets.length == 0 ? 1 : selectedAssets.length;
@@ -114,7 +111,10 @@ const DesiredOutputCard = ({
           };
         }
       } else if (item.tick) {
-        const newItemPercentage = item.percentage !== undefined ? item.percentage - percentagePerAsset : 0;
+        const newItemPercentage =
+          item.percentage !== undefined
+            ? item.percentage - percentagePerAsset
+            : 0;
         if (newItemPercentage >= 0) {
           totalPercentage += newItemPercentage;
           return {
@@ -125,7 +125,7 @@ const DesiredOutputCard = ({
       }
       return item;
     });
-    console.log(updatedOutputAssets)
+    console.log(updatedOutputAssets);
     // const totalSelectedPercentage = updatedOutputAssets.reduce((acc, item) => item.tick ? acc + (item.percentage) : acc, 0);
     console.log(totalPercentage);
     totalPercentage = Math.round(totalPercentage);
@@ -192,7 +192,7 @@ const DesiredOutputCard = ({
                                         onCheckedChange={(state) =>
                                           toggleSwitch(index, state)
                                         }
-                                      // disabled={totalBalance == 0}
+                                        // disabled={totalBalance == 0}
                                       />
                                     )}
                                   </div>
@@ -206,16 +206,16 @@ const DesiredOutputCard = ({
                                 {needSimulation ? "-" : item.amount.toFixed(2)}
                               </div>
                               <div className="table-cell w-1/4">
-                                {needSimulation ? "-" : "$" + item.dollarValue.toFixed(2)}
+                                {needSimulation
+                                  ? "-"
+                                  : "$" + item.dollarValue.toFixed(2)}
                               </div>
-
                             </div>
                             {isEditable && (
                               <div>
                                 <div
                                   className={`flex flex-row mt-1 gap-2 items-right justify-end`}
                                 >
-
                                   {
                                     <Slider
                                       className="w-[70%]"
@@ -232,7 +232,6 @@ const DesiredOutputCard = ({
                                         handleSliderChange(index, newValue[0])
                                       }
                                       disabled={!item.tick}
-
                                     />
                                   }
                                   <div className="text-xs text-gray-400 w-[10%]">
@@ -241,7 +240,6 @@ const DesiredOutputCard = ({
                                   </div>
                                 </div>
                               </div>
-
                             )}
                           </div>
                         </div>
@@ -256,7 +254,6 @@ const DesiredOutputCard = ({
             <Button className="w-full text-center cursor-auto pointer-events-none">
               Total value:{" "}
               <span className="ml-5">
-
                 {needSimulation
                   ? "Please Simulate"
                   : "$" + (totalBalance ?? 0).toFixed(2)}
@@ -267,9 +264,6 @@ const DesiredOutputCard = ({
       </div>
     </>
   );
-
-  
-  
 
   //   return (
   //     <>

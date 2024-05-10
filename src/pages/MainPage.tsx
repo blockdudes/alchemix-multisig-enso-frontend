@@ -40,9 +40,8 @@ import { Assets, EnsoTx, PendingTxData, TokenData } from "@/Types";
 import { useToast } from "@/components/ui/use-toast";
 import ChainAlert from "@/components/ui/Alert";
 import { OWNER1_ADDRESS, multiSigAddress } from "@/lib/constants";
-import { ReloadIcon } from "@radix-ui/react-icons"
+import { ReloadIcon } from "@radix-ui/react-icons";
 import { ButtonLoading } from "@/components/ui/ButtonLoading";
-
 
 export const MainPage = () => {
   const {
@@ -52,9 +51,19 @@ export const MainPage = () => {
     safe,
     setOutputAssets,
     desiredoutput,
-    transactionData, setTransactionData, pendingTransactions, setPendingTransactions, isFetchedData, setIsFetchedData,
-    fetchdata, isNewTransaction, setIsNewTransaction, handleConfirmTX,
-    loadingState, setButtonLoading, handleSignTx
+    transactionData,
+    setTransactionData,
+    pendingTransactions,
+    setPendingTransactions,
+    isFetchedData,
+    setIsFetchedData,
+    fetchdata,
+    isNewTransaction,
+    setIsNewTransaction,
+    handleConfirmTX,
+    loadingState,
+    setButtonLoading,
+    handleSignTx,
   }: {
     clientSigner: JsonRpcSigner;
     safeApiKit: SafeApiKit;
@@ -62,7 +71,7 @@ export const MainPage = () => {
     safe: Safe;
     setOutputAssets: React.Dispatch<React.SetStateAction<Assets[]>>;
     desiredoutput: Assets[];
-    transactionData: any
+    transactionData: any;
     setTransactionData: any;
     pendingTransactions: PendingTxData;
     setPendingTransactions: React.Dispatch<React.SetStateAction<PendingTxData>>;
@@ -78,14 +87,16 @@ export const MainPage = () => {
       reject: boolean;
     };
     setButtonLoading: (type: string, isLoading: boolean) => void;
-    handleSignTx: (isRejected: boolean, pendingTxData?: PendingTxData, isNewTx?: boolean) => Promise<void>;
+    handleSignTx: (
+      isRejected: boolean,
+      pendingTxData?: PendingTxData,
+      isNewTx?: boolean,
+    ) => Promise<void>;
   } = useEthereum();
   const activeAccount = useActiveAccount();
 
-
   const [needSimulation, setNeedSimulation] = useState<boolean>(false);
   const [isStatus, setStatus] = useState<string>("disconnected");
-
 
   const [isAuthorizedUser, setIsAuthorizedUser] = useState<boolean>(false);
   const [checkExecutable, setCheckExecutable] = useState<boolean>(false);
@@ -94,41 +105,43 @@ export const MainPage = () => {
   const [isSimulating, setIsSimulating] = useState<any>(null);
   const walletConnectionStatus = useActiveWalletConnectionStatus();
 
-
-  console.log(walletConnectionStatus)
+  console.log(walletConnectionStatus);
   const { toast } = useToast();
   const chainID = useActiveWalletChain();
 
-
   const testOwner: String = "0xddf809c183EA9e5a268fFfEe5a6C26fc6e2fc525";
-  const supportedChains = { 11155111: 'Sepolia' };
+  const supportedChains = { 11155111: "Sepolia" };
   // const supportedChains = { 1: 'Ethereum'};
 
-
   const isChainSupported = () => {
-    return supportedChains.hasOwnProperty(chainID?.id ?? '');
+    return supportedChains.hasOwnProperty(chainID?.id ?? "");
   };
 
   const handleSimulate = async (
     chainId: string,
     safeAddress: string,
     safeOwner: string,
-    simulateClaimAndSwapBoth: boolean = false
+    simulateClaimAndSwapBoth: boolean = false,
   ) => {
     //build transaction
     safeAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
     safeOwner = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
     chainId = "1"; // todo: remove this
 
-    setIsSimulating(true)
+    setIsSimulating(true);
     try {
-      const result: EnsoTx = await buildClaimAndSwapTx(chainId, safeAddress, safeOwner, simulateClaimAndSwapBoth);
+      const result: EnsoTx = await buildClaimAndSwapTx(
+        chainId,
+        safeAddress,
+        safeOwner,
+        simulateClaimAndSwapBoth,
+      );
 
-      const simulatedData = transformTransactionDataClaimAndSwapAsset(result)
+      const simulatedData = transformTransactionDataClaimAndSwapAsset(result);
       setTransactionData(result);
       setOutputAssets(simulatedData);
       setNeedSimulation(false);
-      console.log(result)
+      console.log(result);
     } catch (error) {
       toast({
         variant: "default",
@@ -136,13 +149,11 @@ export const MainPage = () => {
         title: "Error in simulating Tx.",
       });
       throw new Error("Error in simulating");
-    }
-    finally {
-      setIsSimulating(false)
-
+    } finally {
+      setIsSimulating(false);
     }
     //set output data
-  }
+  };
 
   useEffect(() => {
     try {
@@ -153,7 +164,6 @@ export const MainPage = () => {
           setAuthorizedUsers([...data, testOwner.toLowerCase()]);
         })
         .catch((error) => console.error("Error:", error));
-
     } catch (error) {
       toast({
         title: error as string,
@@ -165,7 +175,7 @@ export const MainPage = () => {
   const isExecutable = async () => {
     const nonce = await safe.getNonce();
     const ourNonce = pendingTransactions && pendingTransactions.pending?.nonce;
-    console.log(nonce, ourNonce)
+    console.log(nonce, ourNonce);
     setCheckExecutable(nonce === ourNonce);
     //  return nonce === ourNonce
   };
@@ -173,34 +183,39 @@ export const MainPage = () => {
     checkIfConfirmed(pendingTransactions, setIsConfirmed);
 
     isExecutable();
-  
+
     // return () => {
     //   second
     // }
-  }, [pendingTransactions])
-  
+  }, [pendingTransactions]);
+
   useEffect(() => {
     if (
-      authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase())
+      authorizedUsers &&
+      authorizedUsers.includes(activeAccount?.address.toLowerCase())
       // true
     ) {
       setIsAuthorizedUser(true);
-      fetchdata()
+      fetchdata();
     }
 
-    console.log(pendingTransactions,pendingTransactions != null , isNewTransaction)
-
+    console.log(
+      pendingTransactions,
+      pendingTransactions != null,
+      isNewTransaction,
+    );
   }, [isNewTransaction, activeAccount, authorizedUsers]);
 
-
   if (walletConnectionStatus == "connecting")
-    return <Loader data="Authenticating..." />
+    return <Loader data="Authenticating..." />;
 
-   if (walletConnectionStatus == "connected")
+  if (walletConnectionStatus == "connected")
     return (
       <>
-            <Navbar />
-        {walletConnectionStatus === "connected" && authorizedUsers && authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
+        <Navbar />
+        {walletConnectionStatus === "connected" &&
+        authorizedUsers &&
+        authorizedUsers.includes(activeAccount?.address.toLowerCase()) ? (
           <>
             {!isChainSupported() && <ChainAlert />}
             {
@@ -209,19 +224,21 @@ export const MainPage = () => {
                 <>
                   {
                     // true ? (
-                    (transactionData != null) ? (
+                    transactionData != null ? (
                       <>
-                        {(pendingTransactions != null && isNewTransaction) ? (
+                        {pendingTransactions != null && isNewTransaction ? (
                           <>
                             <div className="flex flex-col gap-10">
                               <div className="flex flex-row gap-10 items-start justify-center px-4">
                                 <ClaimableRewardsCard
                                   assets={transformTransactionDataClaimAsset(
-                                    transactionData
+                                    transactionData,
                                   )}
                                 />
                                 <DesiredOutputCard
-                                  tokenData={transformTransactionDataClaimAndSwapAsset(transactionData)}
+                                  tokenData={transformTransactionDataClaimAndSwapAsset(
+                                    transactionData,
+                                  )}
                                   isEditable={false}
                                 />
                                 {/* <ReadonlyDesiredOutputCard
@@ -231,8 +248,16 @@ export const MainPage = () => {
                           /> */}
                               </div>
                               <div className="flex flex-col justify-center items-center gap-2 my-2">
-                                <div className="">{pendingTransactions?.rejected && <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>}</div>
-                                <div className="">{pendingTransactions?.pending && <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>}</div>
+                                <div className="">
+                                  {pendingTransactions?.rejected && (
+                                    <p>{`Rejected  - ${pendingTransactions?.rejected?.confirmations?.length}/${pendingTransactions?.rejected?.confirmationsRequired}`}</p>
+                                  )}
+                                </div>
+                                <div className="">
+                                  {pendingTransactions?.pending && (
+                                    <p>{`Confirmations  - ${pendingTransactions?.pending?.confirmations?.length}/${pendingTransactions?.pending?.confirmationsRequired}`}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="w-full p-4 flex justify-center items-center gap-5">
@@ -242,17 +267,22 @@ export const MainPage = () => {
                                     onClick={() =>
                                       handleSignTx(false, pendingTransactions)
                                     }
-                                    hide={checkIfSigned(pendingTransactions, activeAccount)}
+                                    hide={checkIfSigned(
+                                      pendingTransactions,
+                                      activeAccount,
+                                    )}
                                     label="Sign"
                                     loading={loadingState.sign}
                                   />
                                   <Button
                                     variant="destructive"
-                                    hidden={checkIfRejected(pendingTransactions, activeAccount)}
+                                    hidden={checkIfRejected(
+                                      pendingTransactions,
+                                      activeAccount,
+                                    )}
                                     onClick={() =>
                                       handleSignTx(true, pendingTransactions)
                                     }
-
                                   >
                                     {loadingState.reject ? (
                                       <>
@@ -271,7 +301,6 @@ export const MainPage = () => {
                                       <>Reject</>
                                     )}
                                   </Button>
-
                                 </>
                               ) : (
                                 <TooltipProvider delayDuration={10}>
@@ -279,11 +308,15 @@ export const MainPage = () => {
                                     <TooltipTrigger>
                                       <PremiumButton
                                         onClick={() =>
-                                          handleConfirmTX(pendingTransactions && pendingTransactions.pending?.safeTxHash as string)
+                                          handleConfirmTX(
+                                            pendingTransactions &&
+                                              (pendingTransactions.pending
+                                                ?.safeTxHash as string),
+                                          )
                                         }
                                         label="Confirm"
                                         disabled={!checkExecutable}
-                                      // loading={}
+                                        // loading={}
                                       />
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -301,12 +334,12 @@ export const MainPage = () => {
                               <div className="flex flex-row gap-10 items-start justify-center px-4">
                                 <ClaimableRewardsCard
                                   assets={transformTransactionDataClaimAsset(
-                                    transactionData
+                                    transactionData,
                                   )}
                                 />
                                 <DesiredOutputCard
                                   tokenData={transformTransactionDataClaimAsset(
-                                    transactionData
+                                    transactionData,
                                   )}
                                   isEditable={true}
                                   needSimulation={needSimulation}
@@ -315,32 +348,48 @@ export const MainPage = () => {
                               </div>
                             </div>
                             <div className="flex justify-center items-center py-4 gap-4">
-                              {needSimulation ? <Button onClick={() => handleSimulate("1", multiSigAddress, OWNER1_ADDRESS, true)} >
-                                {isSimulating ? <ButtonLoading /> : "Simulate"}
-                              </Button>:  <PremiumButton
-                                onClick={() =>
-                                  handleSignTx(false, undefined, true)
-                                }
-                                label="Swap"
-                                // disabled={transactionQueue?.count > 0 || true}
-                                loading={loadingState.swap}
-                              />}
-
-
-                             
+                              {needSimulation ? (
+                                <Button
+                                  onClick={() =>
+                                    handleSimulate(
+                                      "1",
+                                      multiSigAddress,
+                                      OWNER1_ADDRESS,
+                                      true,
+                                    )
+                                  }
+                                >
+                                  {isSimulating ? (
+                                    <ButtonLoading />
+                                  ) : (
+                                    "Simulate"
+                                  )}
+                                </Button>
+                              ) : (
+                                <PremiumButton
+                                  onClick={() =>
+                                    handleSignTx(false, undefined, true)
+                                  }
+                                  label="Swap"
+                                  // disabled={transactionQueue?.count > 0 || true}
+                                  loading={loadingState.swap}
+                                />
+                              )}
                             </div>
                           </>
                         )}
                       </>
+                    ) : isFetchedData ? (
+                      <div>
+                        <Loader data="Fetching transaction data..." />
+                      </div>
                     ) : (
-                      isFetchedData ? (
-                        <div>
-                          <Loader data="Fetching transaction data..." />
-                        </div>
-                      ) : <>
+                      <>
                         <ErrorCreateTxPage
                           errorTitle={"Failed Tx"}
-                          errorDescription={"Failed Simulating the Old Pending tx, please create new replacement tx"}
+                          errorDescription={
+                            "Failed Simulating the Old Pending tx, please create new replacement tx"
+                          }
                           setter={setIsNewTransaction}
                           loader={setIsFetchedData}
                         />
@@ -351,7 +400,9 @@ export const MainPage = () => {
               ) : (
                 <ErrorPage
                   errorTitle={"401: Unauthorized Access"}
-                  errorDescription={"Only Alchemix Finance DevMultisig Owners are authorized."}
+                  errorDescription={
+                    "Only Alchemix Finance DevMultisig Owners are authorized."
+                  }
                 />
               )
             }
@@ -360,9 +411,6 @@ export const MainPage = () => {
           <Loader data="Authenticating..." />
         )}
       </>
-    )
-   if (walletConnectionStatus == "disconnected")
-    return <AuthenticationPage />
-
+    );
+  if (walletConnectionStatus == "disconnected") return <AuthenticationPage />;
 };
-

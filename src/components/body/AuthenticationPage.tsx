@@ -1,13 +1,12 @@
-import React from 'react';
-import logo from '../../assets/alchemix-logo-round.svg';
-import { Connect } from '@/hooks/Connect';
-import Footer from '../footer/Footer';
+import React from "react";
+import logo from "../../assets/alchemix-logo-round.svg";
+import { Connect } from "@/hooks/Connect";
+import Footer from "../footer/Footer";
 
 export default function AuthenticationPage() {
   return (
     <>
       <div className="authentication-page fotn">
-
         {/* Main content container */}
         <div className="container main-content relative hidden md:grid lg:grid-cols-2 lg:px-20 justify-center items-center mt-32 font-montserrat">
           {/* Logo and branding section */}
@@ -33,7 +32,6 @@ export default function AuthenticationPage() {
               </div>
 
               {/* Terms and privacy links */}
-
             </div>
           </div>
         </div>

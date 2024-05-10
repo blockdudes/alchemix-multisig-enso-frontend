@@ -1,5 +1,5 @@
-import React from 'react';
-import { ThreeDots } from 'react-loader-spinner';
+import React from "react";
+import { ThreeDots } from "react-loader-spinner";
 
 type PremiumButtonProps = {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
@@ -9,13 +9,19 @@ type PremiumButtonProps = {
   hide?: boolean;
 };
 
-const PremiumButton: React.FC<PremiumButtonProps> = ({ onClick, label, disabled = false, loading = false, hide = false }) => {
+const PremiumButton: React.FC<PremiumButtonProps> = ({
+  onClick,
+  label,
+  disabled = false,
+  loading = false,
+  hide = false,
+}) => {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       hidden={hide}
-      className={`brightness-150 dark:brightness-100 group hover:shadow-lg hover:shadow-yellow-700/60 transition ease-in-out hover:scale-105 p-1 rounded-xl bg-gradient-to-br from-yellow-800 via-yellow-600 to-yellow-800 hover:from-yellow-700 hover:via-yellow-800  hover:to-yellow-600 cursor-${disabled ? 'not-allowed' : 'pointer'  }`}
+      className={`brightness-150 dark:brightness-100 group hover:shadow-lg hover:shadow-yellow-700/60 transition ease-in-out hover:scale-105 p-1 rounded-xl bg-gradient-to-br from-yellow-800 via-yellow-600 to-yellow-800 hover:from-yellow-700 hover:via-yellow-800  hover:to-yellow-600 cursor-${disabled ? "not-allowed" : "pointer"}`}
     >
       <div className="px-6 py-2 backdrop-blur-xl bg-black/80 rounded-xl font-bold w-full h-full">
         <div className="group-hover:scale-100 flex group-hover:text-yellow-500 text-yellow-600 gap-1 ">
@@ -35,8 +41,8 @@ const PremiumButton: React.FC<PremiumButtonProps> = ({ onClick, label, disabled 
           </svg>
           {loading ? (
             <>
-            <ThreeDots
-            visible={true}
+              <ThreeDots
+                visible={true}
                 height="20"
                 width="40"
                 color="#985d0b"
@@ -45,11 +51,9 @@ const PremiumButton: React.FC<PremiumButtonProps> = ({ onClick, label, disabled 
                 wrapperStyle={{}}
                 wrapperClass=""
               />
-              </>
-          ) : (
-            <>
-            {label}
             </>
+          ) : (
+            <>{label}</>
           )}
         </div>
       </div>

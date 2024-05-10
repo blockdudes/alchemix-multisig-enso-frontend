@@ -1,8 +1,8 @@
 // import { useActiveWalletConnectionStatus } from "thirdweb/react";
 // import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Transaction } from "./pages/Transaction";
 import { MainPage } from "./pages/MainPage";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
@@ -17,13 +17,13 @@ interface SingleValueMetadata extends BaseMetadata {
 }
 
 interface MultipleValueMetadata extends BaseMetadata {
-  values: Array<{ label: string; value: string; }>;
+  values: Array<{ label: string; value: string }>;
 }
 
 interface MetadataItem {
   key: string;
   value?: string;
-  subValues?: { label: string; value: string; }[];
+  subValues?: { label: string; value: string }[];
 }
 
 interface TokenData {
@@ -53,14 +53,11 @@ const RedirectToDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate('/');
+    navigate("/");
   }, [navigate]);
 
   return null;
 };
-
-
-
 
 const App = () => {
   return (
@@ -68,11 +65,14 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainPage />} />
-          <Route path="/transaction" element={
+          <Route
+            path="/transaction"
+            element={
               <Transaction />
-            // <ProtectedRoute>
-            // </ProtectedRoute>
-          } />
+              // <ProtectedRoute>
+              // </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </>

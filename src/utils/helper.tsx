@@ -1,5 +1,5 @@
-import { RPC_URL } from '@/lib/constants';
-import { ethers } from 'ethers';
+import { RPC_URL } from "@/lib/constants";
+import { ethers } from "ethers";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 
@@ -39,8 +39,6 @@ export const sendTransaction = async (transaction: any) => {
 // };
 
 export const getTheOwners = async () => {
-
-
   const contractAddress: string = "0x9e2b6378ee8ad2A4A95Fe481d63CAba8FB0EBBF9";
   const contractABI: any[] = [
     { inputs: [], stateMutability: "nonpayable", type: "constructor" },
@@ -648,19 +646,20 @@ export const getTheOwners = async () => {
 
   try {
     if (!provider) {
-      throw new Error('Provider is not set');
+      throw new Error("Provider is not set");
     }
 
-    const contract = new ethers.Contract(contractAddress, contractABI, provider);
+    const contract = new ethers.Contract(
+      contractAddress,
+      contractABI,
+      provider,
+    );
 
     const result = await contract.getOwners();
     const resArray = [...result.values()];
     return resArray;
-    
   } catch (error) {
-    console.log(error)
-    throw error
+    console.log(error);
+    throw error;
   }
 };
-
-
