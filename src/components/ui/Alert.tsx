@@ -1,4 +1,3 @@
-import React from "react";
 import { useSwitchActiveWalletChain } from "thirdweb/react";
 import { ethereum } from "thirdweb/chains";
 

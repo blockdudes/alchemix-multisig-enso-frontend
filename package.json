@@ -8,7 +8,6 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint-and-fix": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
-
     "preview": "vite preview",
     "fork": "anvil --fork-url https://rpc.ankr.com/eth"
   },
@@ -38,8 +37,10 @@
     "fs": "^0.0.1-security",
     "global": "^4.4.0",
     "lucide-react": "^0.370.0",
+    "papaparse": "^5.4.1",
     "react": "^18.2.0",
     "react-loader-spinner": "^6.1.6",
+    "swr": "^2.2.5",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "^5.7.0",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

@@ -1,5 +1,4 @@
 import axios from "axios";
-import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 // import { ethers, Interface, Result, Transaction } from "ethers";
 import {
   OperationType,
@@ -11,17 +10,19 @@ import SafeApiKit, {
   SafeMultisigTransactionListResponse,
 } from "@safe-global/api-kit";
 import {
+  assetManagerAddresses,
+  DEFAULT_LAST_CLAIM_DATE,
   ethAddress,
   multiSigAddress,
   RPC_URL,
   SAFE_TRANSACTION_ORIGIN,
-  SEPOLIA_RPC_URL,
-  threePoolManagerAddress,
 } from "@/lib/constants";
-import { Assets, PendingTxData } from "@/Types";
+import { Assets, EnsoAction, PendingTxData, AssetChanges, EnsoTx, SafeTxData, EndSimulation, AssetSimpleData, TokenAddressSymbol } from "@/Types";
 import { Account } from "thirdweb/wallets";
-import { useEthereum } from "@/context/store";
-import { dummyData } from "@/dummydata";
+import { getSwapData } from "./odos";
+import { setup } from "./helper";
+// import { safeSdk } from "./safe";
+import Papa from 'papaparse';
 
 // const tenderly: Tenderly = require("tenderly");
 const ensoApi = "https://api.enso.finance/api/v1/";
@@ -34,45 +35,22 @@ const ensoApiKey = "1e02632d-6feb-4a75-a157-documentation";
 const tenderlyApiKey = "0zBCBQ1AK8PKm51GbN5k9bopBGPXRhmF";
 
 // const zeroAddress = "0x0000000000"
-interface SafeTxData {
-  to: string;
-  value: string;
-  input: string;
-  from: string;
-}
+export const swapAssets: AssetSimpleData = {
+  "1": {
+    "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": "USDC",
+    "0xd1b5651e55d4ceed36251c61c50c889b36f6abb5": "sdCRV",
+    //sdCRV, veFXS, FXS, CRV, CVX, ALCX, ETH, USDC, pyUSD, AURA
+    "0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0":"veFXS",
+    "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0":"FXS",
+    "0xD533a949740bb3306d119CC777fa900bA034cd52":"CRV",
+    "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b":"CVX",
+    "0xdbdb4d16eda451d0503b854cf79d55697f90c8df":"ALCX",
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee":"ETH",
+    "0x6c3ea9036406852006290770bedfcaba0e23a0e8":"pyUSD",
+    "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF":"AURA"
+  },
+};
 
-interface EnsoAction {
-  protocol: string;
-  action: string;
-  args: any;
-}
-
-interface AssetChanges {
-  [token: string]: {
-    amount: number;
-    rawAmount: bigint;
-    symbol: string;
-    dollarValue: number;
-  };
-}
-interface EnsoRouteAction extends EnsoAction {
-  protocol: string;
-  action: string;
-  args: {
-    slippage: number;
-    tokenIn: string;
-    tokenOut: string;
-    amountIn: string;
-    receiver: string;
-  };
-}
-
-export interface EndSimulation {
-  claim: Record<string, AssetChanges>;
-  claimAndSwap: Record<string, AssetChanges>;
-}
-
-let safeSdk: Safe;
 export const getEnsoWalletAddress = async (
   chainId: string,
   fromAddress: string,
@@ -97,17 +75,21 @@ export const getEnsoWalletAddress = async (
 const claimRewardData = (): EnsoAction[] => {
   try {
     const output: EnsoAction[] = [
-      {
+      
+    ];
+    for(const assetManagerAddress of assetManagerAddresses){
+      const claimAction = {
         protocol: "enso",
         action: "call",
         args: {
-          address: threePoolManagerAddress,
+          address: assetManagerAddress,
           method: "claimRewards",
           abi: "function claimRewards() external",
           args: [], // Fix: Allow an empty array for args
         },
-      }, // todo: add more manager addresses
-    ];
+      } 
+      output.push(claimAction)
+    }
     return output;
   } catch (error) {
     throw new Error("Error creating claim reward data");
@@ -123,11 +105,7 @@ export const usdcSwapData = (
     const usdcAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
     const output: EnsoAction[] = [];
     for (const [token, changes] of Object.entries(assetChanges)) {
-      const amount = changes.rawAmount.toString(); // todo: change this divide only used because enso route function is failing
-      // use token address and amount to create the ensorouteaction
-      // const approveToken = approveTokenData(token, ensoWalletAddress, amount);
-      // output.push(approveToken);
-      // if (token != "0xd533a949740bb3306d119cc777fa900ba034cd52") {
+      const amount = changes.rawAmount.toString(); 
       output.push({
         protocol: "enso",
         action: "route",
@@ -220,28 +198,21 @@ export const convertSimulationToAssetChanges = async (
   }
 };
 
-interface EnsoTx {
-  data: string;
-  to: string;
-  value: string;
-  assetChanges: {
-    claim: AssetChanges;
-    claimAndSwap: AssetChanges;
-  };
-}
 
 export const buildClaimAndSwapTx = async (
   chainId: string,
   safeAddress: string,
   safeOwner: string,
   simulateClaimAndSwapBoth: boolean = false,
+  outputAssets: Assets[] | undefined,
+  slippage: number = 0.3
 ): Promise<EnsoTx> => {
   try {
     // const ensoWalletAddress = await getEnsoWalletAddress(chainId, safeAddress);
 
     const claimRewardEnsoData = claimRewardData();
 
-    const ensoClaimRewardData = await ensoBuildTx(
+    let ensoTxData = await ensoBuildTx(
       claimRewardEnsoData,
       safeAddress,
       chainId,
@@ -251,7 +222,7 @@ export const buildClaimAndSwapTx = async (
     try {
       simulateEnsoClaimTxData = await simulateTx(
         chainId,
-        ensoClaimRewardData.tx,
+        ensoTxData.tx,
         safeAddress,
         safeOwner,
       );
@@ -265,44 +236,63 @@ export const buildClaimAndSwapTx = async (
     const multisigClaimAssetChanges: AssetChanges =
       claimAssetChanges[safeAddress]; // todo: handle errors
 
-    const swapData = usdcSwapData(
-      multisigClaimAssetChanges,
-      // ensoWalletAddress
-    );
 
-    // [...claimRewardEnsoData, ...swapData],
-    const ensoClaimAndSwapTxData = await ensoBuildTx(
-      [...claimRewardEnsoData, ...swapData],
-      safeAddress,
-      chainId,
-    );
 
     let multisigClaimAndSwapAssetChanges = {};
+    let image = ""
+    if (simulateClaimAndSwapBoth && outputAssets != undefined) {
 
-    if (simulateClaimAndSwapBoth) {
+
+      // const swapData = usdcSwapData(
+      //   multisigClaimAssetChanges,
+      //   // ensoWalletAddress
+      // );
+  
+
+      const {data: swapData, image: pathImage} = await getSwapData(
+        safeAddress,
+        Number(chainId),
+        multisigClaimAssetChanges,
+        outputAssets,
+        slippage,
+        // ensoWalletAddress
+      );
+      console.log(swapData)
+      // [...claimRewardEnsoData, ...swapData],
+       ensoTxData = await ensoBuildTx(
+        [...claimRewardEnsoData, ...swapData],
+        safeAddress,
+        chainId,
+      );
+
       const simulateEnsoClaimAndSwapTxData = await simulateTx(
         chainId,
-        ensoClaimAndSwapTxData.tx,
+        ensoTxData.tx,
         safeAddress,
         safeOwner,
       );
 
-      console.log(ensoClaimAndSwapTxData);
+      console.log(ensoTxData)
+      console.log(simulateEnsoClaimAndSwapTxData)
+
 
       const assetChanges = await convertSimulationToAssetChanges(
         simulateEnsoClaimAndSwapTxData,
       );
+      console.log(assetChanges)
 
       multisigClaimAndSwapAssetChanges = assetChanges[safeAddress];
+      image = pathImage
     }
     const outputTx = {
-      data: ensoClaimAndSwapTxData.tx.data,
-      to: ensoClaimAndSwapTxData.tx.to,
-      value: ensoClaimAndSwapTxData.tx.value,
+      data: ensoTxData.tx.data,
+      to: ensoTxData.tx.to,
+      value: ensoTxData.tx.value,
       assetChanges: {
         claim: multisigClaimAssetChanges,
         claimAndSwap: multisigClaimAndSwapAssetChanges,
       },
+      image: image
     };
 
     console.log("-->", outputTx);
@@ -313,26 +303,6 @@ export const buildClaimAndSwapTx = async (
   }
 };
 
-const approveTokenData = (
-  tokenAddress: string,
-  receiverAddress: string,
-  amount: string,
-) => {
-  try {
-    const output = {
-      protocol: "enso",
-      action: "approve",
-      args: {
-        token: tokenAddress,
-        spender: receiverAddress,
-        amount: amount,
-      },
-    };
-    return output;
-  } catch (error) {
-    throw new Error("Error creating approve token data");
-  }
-};
 
 const safeTxDataFromEnsoTx = async (
   txData: Record<string, string>,
@@ -340,15 +310,7 @@ const safeTxDataFromEnsoTx = async (
   safeOwner: string,
 ) => {
   try {
-    const ethersProvider = new ethers.JsonRpcProvider(RPC_URL);
-
-    safeSdk = await Safe.create({
-      ethAdapter: new EthersAdapter({
-        ethers,
-        signerOrProvider: ethersProvider,
-      }),
-      safeAddress: safeAddress,
-    });
+    const safeSdk = await setup(safeAddress);
 
     const safeTransaction = await safeSdk.createTransaction({
       transactions: [
@@ -397,6 +359,8 @@ export const simulateTx = async (
       {
         network_id: chainId,
         ...safeTxData,
+        "save": true,
+        "save_if_fails": true,
         state_objects: {
           [safeAddress]: {
             storage: {
@@ -439,19 +403,19 @@ export const simulateTx = async (
 // }
 // main();
 
-const getTransactionQueue = async (safeAddress: string, chainId: number) => {
-  try {
-    const networkPrefix = {
-      1: "eth",
-      5: "goerli",
-    }[chainId];
-    const url = `https://app.safe.global/transactions/queue?safe=${networkPrefix}:${safeAddress}`;
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching transaction queue");
-  }
-};
+// const getTransactionQueue = async (safeAddress: string, chainId: number) => {
+//   try {
+//     const networkPrefix = {
+//       1: "eth",
+//       5: "goerli",
+//     }[chainId];
+//     const url = `https://app.safe.global/transactions/queue?safe=${networkPrefix}:${safeAddress}`;
+//     const response = await axios.get(url);
+//     return response.data;
+//   } catch (error) {
+//     throw new Error("Error fetching transaction queue");
+//   }
+// };
 
 export const getAllTransations = async () => {
   try {
@@ -555,9 +519,10 @@ export const reSimulateTx = async (
     const assetChanges: EndSimulation =
       await convertEndSimulationToAssetChanges(
         claimAndSwapTxData,
-        [threePoolManagerAddress],
+        assetManagerAddresses,
         safeAddress,
       );
+      console.log(assetChanges)
 
     return assetChanges;
     // const multisigAssetChanges = assetChanges.claim[multiSigAddress];
@@ -570,11 +535,39 @@ export const reSimulateTx = async (
   }
 };
 
+export async function getLatestExecutionDate(): Promise<string> {
+
+  const ethersProvider = new ethers.JsonRpcProvider(RPC_URL); // todo: change this
+  // todo: change this
+  const safeApiKit = new SafeApiKit({
+    chainId: (await ethersProvider.getNetwork()).chainId,
+  });
+
+  const checksum_multisig = ethers.getAddress(multiSigAddress);
+  const transactions: SafeMultisigTransactionResponse[] =
+    (await safeApiKit.getMultisigTransactions(checksum_multisig)).results;
+  // Filter transactions where the origin is "ENSO"
+  const ensoTransactions = transactions.filter(tx => tx.origin === "ENSO");
+
+  // If no transactions match, return null
+  if (ensoTransactions.length === 0) {
+      return DEFAULT_LAST_CLAIM_DATE;
+  }
+
+  // Sort the filtered transactions by executionDate in descending order
+  ensoTransactions.sort((a: any, b: any) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
+
+  // Return the latest executionDate
+  return ensoTransactions[0].executionDate;
+}
+
+
 export const getPendingTransaction =
   async (): Promise<PendingTxData | null> => {
     try {
-      const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
-
+      // const ethersProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL); // todo: change this
+      const ethersProvider = new ethers.JsonRpcProvider(RPC_URL); // todo: change this
+      // todo: change this duplicate
       const safeApiKit = new SafeApiKit({
         chainId: (await ethersProvider.getNetwork()).chainId,
       });
@@ -650,7 +643,7 @@ export const getPendingTransaction =
     }
   };
 
-export const getPendingTransactionO =
+export const getPendingTransactionDummy =
   async (): Promise<PendingTxData | null> => {
     // await Promise<>;
 
@@ -661,9 +654,12 @@ export const getPendingTransactionO =
   };
 
 export const transformTransactionDataClaimAsset = (transactionData: any) => {
-  const assetChanges = transactionData && transactionData.assetChanges?.claim;
-  if (!assetChanges) return []; // Return an empty array if no asset changes
+  console.log(transactionData)
 
+  const assetChanges = transactionData && transactionData.assetChanges?.claim;
+  console.log(assetChanges)
+
+  if (!assetChanges) return []; // Return an empty array if no asset changes
   return Object.entries(assetChanges).map<Assets>(
     ([address, assetData]: [string, any]): Assets => ({
       id: address,
@@ -675,10 +671,26 @@ export const transformTransactionDataClaimAsset = (transactionData: any) => {
     }),
   );
 };
-
+export const createAssets = (assetsData: TokenAddressSymbol): Assets[] => {
+  let assets = [];
+  // const assetsData = assetsMultiChainData["1"]; // todo: change this to dynamic chain id
+  for (const [address, tokenName] of Object.entries(assetsData)) {
+    if (tokenName != "") {
+      assets.push({
+        id: address,
+        tokenName: tokenName,
+        amount: 0,
+        tick: false,
+        dollarValue: 0,
+      });
+    }
+  }
+  return assets;
+};
 export const transformTransactionDataClaimAndSwapAsset = (
   transactionData: any,
 ) => {
+
   const claimAndSwapAssets =
     transactionData && transactionData.assetChanges?.claimAndSwap;
 
@@ -688,19 +700,41 @@ export const transformTransactionDataClaimAndSwapAsset = (
     0,
   );
 
+  let staticAssetsData = swapAssets["1"]; // todo: make this dynamic
+  let outputTransformedData = []
+  for(const [address, data] of Object.entries(claimAndSwapAssets)){ 
+    const assetData: any = data
+    const asset: Assets = {
+      id: address,
+      tokenName: assetData.symbol || "",
+      amount: assetData.amount || 0,
+      dollarValue: assetData.dollarValue || 0,
+      tick: assetData.amount > 0.1,
+      percentage: Number((((assetData.dollarValue || 0) / totalDollarValue) * 100).toFixed(2)),
+    }
+    if(asset.tick){
+      outputTransformedData.push(asset)
+      staticAssetsData[address] = ""
+    }
+  }
+
+
+  const staticAssets = createAssets(staticAssetsData)
+  outputTransformedData.push(...staticAssets)
+
   // Filter and transform claim and swap assets directly from the data
-  const outputTransformedData = Object.entries(claimAndSwapAssets)
-    .map<Assets>(
-      ([address, assetData]: [string, any]): Assets => ({
-        id: address,
-        tokenName: assetData.symbol || "",
-        amount: assetData.amount || 0,
-        dollarValue: assetData.dollarValue || 0,
-        tick: assetData.amount > 0.1,
-        percentage: ((assetData.dollarValue || 0) / totalDollarValue) * 100,
-      }),
-    )
-    .filter((asset) => asset.tick); // Filter out assets below the threshold of 0.001 amount
+  // const outputTransformedData = Object.entries(claimAndSwapAssets)
+  //   .map<Assets>(
+  //     ([address, assetData]: [string, any]): Assets => ({
+  //       id: address,
+  //       tokenName: assetData.symbol || "",
+  //       amount: assetData.amount || 0,
+  //       dollarValue: assetData.dollarValue || 0,
+  //       tick: assetData.amount > 0.1,
+  //       percentage: ((assetData.dollarValue || 0) / totalDollarValue) * 100,
+  //     }),
+  //   )
+  //   .filter((asset) => asset.tick); // Filter out assets below the threshold of 0.001 amount
 
   // Sort the data by dollar value in descending order
   const sortedData = outputTransformedData.sort(
@@ -752,6 +786,74 @@ export const checkIfRejected = (
 
   return hasRejected;
 };
+const ipfsIncentivesDataUrl = async () => {
+
+    const pinata_file_name = "incentivesData.csv"
+    const pinata_key = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI5NzUxZWM0MS05ODhhLTQxNTctYThlMC1lNDJiOWRlODZkZDQiLCJlbWFpbCI6ImltaW1pbS5lbWFpbEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJpZCI6IkZSQTEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX0seyJpZCI6Ik5ZQzEiLCJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MX1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiYzhiNDQ1YWViOGZkMWU2MzZhZDMiLCJzY29wZWRLZXlTZWNyZXQiOiI4ZDkxYTNlYzE4N2QyYzIyYzc4YmMwODg2ZGYyYzA1ZmI3MzkyMjI1YjY0MTZkZTUyMTVkN2Q3OWEyYmMwMzFlIiwiaWF0IjoxNzE3NDUwODExfQ.qhehpv3kIjh8M5b0Yo9hBCpFu2fkMeGBbx0zNbDeFeY';
+    const pinata_gateway = "https://gateway.pinata.cloud/ipfs/";
+
+    const request_headers = {
+        "Content-Type": "application/json",
+        "Authorization": pinata_key
+    };
+
+    const find_file_string_1 = "https://api.pinata.cloud/data/pinList?includeCount=false&metadata[name]=";
+    const find_file_string_2 = "&status=pinned&pageLimit=1";
+
+    const find_file_url = find_file_string_1 + pinata_file_name + find_file_string_2;
+
+    console.log("Looking up " + pinata_file_name + " file on pinata");
+
+    try {
+        const response = await axios.get(find_file_url, { headers: request_headers });
+        const pinata = response.data;
+        const fileHash = pinata.rows[0].ipfs_pin_hash;
+        const ipfsUrl = pinata_gateway + fileHash;
+        return ipfsUrl;
+    } catch (error) {
+        console.error("Error fetching file from Pinata:", error);
+        throw error;
+    }
+}
+
+
+
+async function fetchCsvData(url: string): Promise<any[]> {
+  const response = await fetch(url);
+  const csvText = await response.text();
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvText, {
+      header: true,
+      complete: (results) => resolve(results.data),
+      error: (error: any) => reject(error)
+    });
+  });
+}
+
+function parseDate(dateString: string): Date {
+  return new Date(dateString);
+}
+
+function calculateALCXAmount(data: any[], lastAMOClaimDate: Date): number {
+  return data
+    .filter(row => parseDate(row.date) > lastAMOClaimDate && row.token_symbol === 'ALCX')
+    .reduce((total, row) => total + parseFloat(row.token_amount), 0);
+}
+
+export const fetchLastClaimedAmount = async (lastAMOClaimDateString: string = DEFAULT_LAST_CLAIM_DATE) => {
+  const url = await ipfsIncentivesDataUrl()
+  // const url = 'YOUR_CSV_URL';
+    const lastAMOClaimDate = new Date(lastAMOClaimDateString)
+  try {
+    const csvData = await fetchCsvData(url);
+    const totalALCXAmount = calculateALCXAmount(csvData, lastAMOClaimDate);
+    console.log(`Total ALCX amount after the last AMO claim: ${totalALCXAmount}`);
+    return totalALCXAmount
+  } catch (error) {
+    console.error('Error fetching or parsing CSV data:', error);
+    return 0
+  }
+};
 
 // check if completed required confirmations
 export const checkIfConfirmed = (
@@ -772,3 +874,23 @@ export const checkIfConfirmed = (
 
   setIsConfirmed(confirmed);
 };
+export function formatMoney(amount: number, currency: string = '$'): string {
+  if (isNaN(amount)) {
+      return '';
+  }
+
+  const absAmount = Math.abs(amount);
+  let formatted = '';
+
+  if (absAmount >= 1e9) {
+      formatted = (amount / 1e9).toFixed(2) + 'B';
+  } else if (absAmount >= 1e6) {
+      formatted = (amount / 1e6).toFixed(2) + 'M';
+  } else if (absAmount >= 1e3) {
+      formatted = (amount / 1e3).toFixed(2) + 'K';
+  } else {
+      formatted = amount.toFixed(2);
+  }
+
+  return `${currency}${formatted}`;
+}

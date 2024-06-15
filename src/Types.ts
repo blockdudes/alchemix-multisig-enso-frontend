@@ -7,12 +7,21 @@ export interface TokenData {
   dollarValue: number;
 }
 
-export interface AssetChanges {
-  [token: string]: {
-    amount: number;
-    rawAmount: bigint;
-  };
+// export interface AssetChanges {
+//   [token: string]: {
+//     amount: number;
+//     rawAmount: bigint;
+//   };
+// }
+
+export interface AssetSimpleData {
+  [chainId: string]: TokenAddressSymbol;
 }
+
+export interface TokenAddressSymbol {
+  [address: string]: string;
+}
+
 
 export interface EnsoTx {
   data: string;
@@ -40,4 +49,45 @@ export interface DesiredOutputCardProps {
 export interface PendingTxData {
   pending?: SafeMultisigTransactionResponse;
   rejected?: SafeMultisigTransactionResponse;
+}
+export interface SafeTxData {
+  to: string;
+  value: string;
+  input: string;
+  from: string;
+}
+
+export interface EnsoAction {
+  protocol: string;
+  action: string;
+  args: any;
+}
+
+export interface AssetChanges {
+  [token: string]: {
+    amount: number;
+    rawAmount: bigint;
+    symbol: string;
+    dollarValue: number;
+  };
+}
+export interface EnsoTx {
+  data: string;
+  to: string;
+  value: string;
+  assetChanges: {
+    claim: AssetChanges;
+    claimAndSwap: AssetChanges;
+  };
+  image: string 
+}
+
+export interface EndSimulation {
+  claim: Record<string, AssetChanges>;
+  claimAndSwap: Record<string, AssetChanges>;
+}
+
+export interface OdosSwapData {
+  data: EnsoAction[]
+  image: string
 }

@@ -1,12 +1,9 @@
 import { ConnectButton } from "thirdweb/react";
-import { createWallet, inAppWallet, walletConnect } from "thirdweb/wallets";
-import { createThirdwebClient } from "thirdweb";
+import { createWallet, walletConnect } from "thirdweb/wallets";
 import { arbitrum, ethereum, optimism } from "thirdweb/chains";
 import { useTheme } from "@/components/theme-provider";
+import { client } from "@/utils/client";
 
-const client = createThirdwebClient({
-  clientId: import.meta.env.VITE_THIRDWEB_CLIENT_KEY,
-});
 
 const wallets = [
   createWallet("io.metamask"),

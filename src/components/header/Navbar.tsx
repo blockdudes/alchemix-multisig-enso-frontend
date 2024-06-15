@@ -2,7 +2,7 @@ import { Connect } from "@/hooks/Connect";
 import { ModeToggle } from "../mode-toggle";
 import logo from "../../assets/alchemix-logo.svg";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const navigate = useNavigate();

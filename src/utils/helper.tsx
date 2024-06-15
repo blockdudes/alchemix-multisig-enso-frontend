@@ -1,23 +1,24 @@
-import { RPC_URL } from "@/lib/constants";
+import { ETH_RPC_URL } from "@/lib/constants";
+import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import { ethers } from "ethers";
 
-const provider = new ethers.JsonRpcProvider(RPC_URL);
+const provider = new ethers.JsonRpcProvider(ETH_RPC_URL); // todo: change this
 
 const privateKey = import.meta.env.VITE_SECRET_KEY;
 
 const wallet = new ethers.Wallet(privateKey, provider);
 
-export const signTransaction = async (transaction: any) => {
-  let signature;
-  try {
-    signature = await provider.send("personal_sign", [transaction, wallet]);
-  } catch (error) {
-    console.log(error);
-    signature = null;
-    throw error;
-  }
-  return signature;
-};
+// export const signTransaction = async (transaction: any) => {
+//   let signature;
+//   try {
+//     signature = await provider.send("personal_sign", [transaction, wallet]);
+//   } catch (error) {
+//     console.log(error);
+//     signature = null;
+//     throw error;
+//   }
+//   return signature;
+// };
 
 export const sendTransaction = async (transaction: any) => {
   try {
@@ -30,13 +31,13 @@ export const sendTransaction = async (transaction: any) => {
   }
 };
 
-// export const setup = async (safeAddress: string) => {
-//     const safeSdk = await Safe.create({
-//     ethAdapter: new EthersAdapter({ ethers, signerOrProvider: provider }),
-//     safeAddress: safeAddress,
-//   });
-//   return safeSdk;
-// };
+export const setup = async (safeAddress: string) => {
+    const safeSdk = await Safe.create({
+    ethAdapter: new EthersAdapter({ ethers, signerOrProvider: provider }),
+    safeAddress: safeAddress,
+  });
+  return safeSdk;
+};
 
 export const getTheOwners = async () => {
   const contractAddress: string = "0x9e2b6378ee8ad2A4A95Fe481d63CAba8FB0EBBF9";

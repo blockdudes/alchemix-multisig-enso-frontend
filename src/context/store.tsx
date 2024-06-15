@@ -1,22 +1,22 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { JsonRpcSigner, ethers } from "ethers";
-import anvil from "@/utils/anvil";
+import {  Signer, ethers } from "ethers";
 import Safe, { EthersAdapter } from "@safe-global/protocol-kit";
 import {
-  CHAIN_ID,
-  OWNER1_ADDRESS,
-  RPC_URL,
-  SAFE_OWNER,
+  // CHAIN_ID,
+  // OWNER1_ADDRESS,
+  // RPC_URL,
+  // SAFE_OWNER,
   SAFE_TRANSACTION_ORIGIN,
   multiSigAddress,
 } from "@/lib/constants";
 import SafeApiKit from "@safe-global/api-kit";
-import { Assets, PendingTxData, TokenData } from "@/Types";
+import { Assets, PendingTxData, EndSimulation } from "@/Types";
 import {
-  EndSimulation,
   buildClaimAndSwapTx,
+  createAssets,
   getPendingTransaction,
   reSimulateTx,
+  swapAssets,
 } from "@/utils/utils";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -24,30 +24,24 @@ import {
   SafeMultisigTransactionResponse,
   SafeTransaction,
 } from "@safe-global/safe-core-sdk-types";
+import { useActiveWalletChain , useActiveAccount} from "thirdweb/react";
+import { ethers6Adapter } from "thirdweb/adapters/ethers6";
+import { client } from "@/utils/client";
+// import { dummyNewTxData } from "@/dummydata";
 
 export const appState = createContext<any>(null);
 
 const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
-  const [clientSigner, setClientSigner] = useState<JsonRpcSigner | null>(null);
-  const [rpcSigner, setRpcSigner] = useState<ethers.Wallet | null>(null);
+  const [clientSigner, setClientSigner] = useState<Signer | null>(null);
+  // const [rpcSigner, setRpcSigner] = useState<ethers.Wallet | null>(null);
   const [ethAdapter, setEthAdapter] = useState<EthersAdapter | null>(null);
   const [safe, setSafe] = useState<Safe | null>(null);
   const [safeApiKit, setSafeApiKit] = useState<SafeApiKit | null>(null);
-  const dummyData = [
-    {
-      id: "0",
-      tokenName: "USDC",
-      amount: 0,
-      tick: false,
-      dollarValue: 0,
-      percentage: 0,
-    },
-    // { id: "1" ,tokenName: 'USDC2', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
-    // { id: "2" ,tokenName: 'USDC3', amount: 0, tick: false, dollarValue: 0 , percentage: 0},
-    // { token: 'USDC', balance: 0, selected: false, dollarValue: 0 },
-    // { token: 'Btc in unisat', balance: 0, selected: false,dollarValue: 0 },
-  ];
-  const [outputAssets, setOutputAssets] = useState<Assets[]>(dummyData);
+  const chain = useActiveWalletChain();
+  const account = useActiveAccount()
+  const staticAssets = createAssets(swapAssets["1"]);
+  const [outputAssets, setOutputAssets] = useState<Assets[]>(staticAssets);
+  const [slippage, setSlippage] = useState<number>(0.3);
 
   const [transactionData, setTransactionData] = useState<any>(null);
   const [pendingTransactions, setPendingTransactions] = useState<any>(null);
@@ -89,7 +83,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
           CHAIN_ID,
           txData,
           multiSigAddress,
-          SAFE_OWNER,
+          SAFE_OWNER
         );
         const multisigClaimAssetChanges = endSimulation.claim[multiSigAddress];
         const multisigClaimAndSwapAssetChanges =
@@ -124,10 +118,14 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
         const multiSigAddress = "0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9"; // todo: remove this
         const SAFE_OWNER: string = "0x5788F90196954A272347aEe78c3b3F86F548D0a9"; // todo: remove this
         const CHAIN_ID: string = "1"; // todo: remove this
+        // const result = dummyNewTxData
         const result = await buildClaimAndSwapTx(
           CHAIN_ID,
           multiSigAddress,
           SAFE_OWNER,
+          false,
+          undefined,
+          slippage
         );
         console.log(`ress`, result);
         setTransactionData(result);
@@ -146,7 +144,6 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const simulateOutputAssets = async (outputAssets: Assets[]) => {};
   const handleConfirmTX = async (safeTxHash: string) => {
     try {
       const safeTransaction =
@@ -178,7 +175,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
   const handleSignTx = async (
     isRejected: boolean,
     pendingTxData?: PendingTxData,
-    isNewTx: boolean = false,
+    isNewTx: boolean = false
   ) => {
     try {
       if (!isRejected && (pendingTransactions || isNewTx)) {
@@ -196,7 +193,6 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
           setButtonLoading("sign", true);
         }
       } else if (isRejected) {
-        setButtonLoading("reject", true);
       } else {
         throw new Error("Invalid transaction state.");
       }
@@ -214,7 +210,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
             signTransaction =
               safe &&
               (await safe.createRejectionTransaction(
-                pendingTxData.pending.nonce,
+                pendingTxData.pending.nonce
               ));
             isProposed = false;
           }
@@ -232,7 +228,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
         console.log(
           nextNonce,
           pendingTransactions?.pending?.nonce,
-          safeApiKit && (await safeApiKit.getNextNonce(multiSigAddress)),
+          safeApiKit && (await safeApiKit.getNextNonce(multiSigAddress))
         );
 
         signTransaction =
@@ -263,7 +259,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
           safeTxHash =
             (safe &&
               (await safe.getTransactionHash(
-                signTransaction as SafeTransaction,
+                signTransaction as SafeTransaction
               ))) ||
             "";
         }
@@ -309,7 +305,7 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
             senderSignature &&
             (await safeApiKit.confirmTransaction(
               safeTxHash,
-              senderSignature.data,
+              senderSignature.data
             ));
         }
       } else {
@@ -333,55 +329,76 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const initEthereum = async () => {
-      if (!window.ethereum) {
-        console.error("Ethereum provider (e.g., MetaMask) not found");
-        return;
-      }
+      // if (!window.ethereum) {
+      //   console.error("Ethereum provider (e.g., MetaMask) not found");
+      //   return;
+      // }
 
       try {
-        const injectedProvider = new ethers.BrowserProvider(window.ethereum);
-
-        const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
-        const injectedSigner = await injectedProvider.getSigner();
-        const rpc_Signer = new ethers.Wallet(
-          import.meta.env.VITE_SECRET_KEY,
-          rpcProvider,
-        );
+        // const injectedProvider = new ethers.BrowserProvider(window.ethereum);
+        // const signer = await toEthersSigner(
+        //   ethers5,
+        //   TEST_CLIENT,
+        //   account,
+        //   ANVIL_CHAIN,
+        // );
+       if(chain!=undefined && account != undefined ){
+        const signer = await ethers6Adapter.signer.toEthers({
+          client: client,
+          account: account,
+          chain: chain,
+        });
+        // const signer = ethers6Adapter.signer.fromEthers(provider);
+        console.log(signer)
+        // const signer = await adapter.getSigner()
+        // const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+        // const injectedSigner = await injectedProvider.getSigner();
+        // console.log("injectedSigner");
+        // console.log(injectedSigner);
+        // const rpc_Signer = new ethers.Wallet(
+        //   import.meta.env.VITE_SECRET_KEY,
+        //   rpcProvider
+        // );
         const ethAdapter = new EthersAdapter({
           ethers,
-          signerOrProvider: injectedSigner,
+          signerOrProvider: signer,
         });
         const safeApiKit = new SafeApiKit({
-          chainId: 11155111n, // Converted CHAIN_ID to a bigint
+          chainId: 1n, // todo: change thisn Converted CHAIN_ID to a bigint
+          // chainId: 11155111n, // todo: change thisn Converted CHAIN_ID to a bigint
         });
+        console.log(multiSigAddress);
+
         const _safe = await Safe.create({
-          ethAdapter,
+          ethAdapter: ethAdapter,
           safeAddress: multiSigAddress,
         });
-
-        setClientSigner(injectedSigner);
-        setRpcSigner(rpc_Signer);
+        setClientSigner(signer);
+        // setRpcSigner(rpc_Signer);
         setEthAdapter(ethAdapter);
         setSafe(_safe);
         setSafeApiKit(safeApiKit);
+       }
+
+        
       } catch (error) {
         throw error;
       }
     };
 
     initEthereum();
-  }, []);
+  }, [account,chain]);
 
   return (
     <appState.Provider
       value={{
         safeApiKit,
         clientSigner,
-        rpcSigner,
+        // rpcSigner,
         ethAdapter,
         safe,
-        outputAssets,
         setOutputAssets,
+        outputAssets,
         transactionData,
         setTransactionData,
         pendingTransactions,
@@ -395,6 +412,8 @@ const GlobalStateProvider = ({ children }: { children: React.ReactNode }) => {
         handleSignTx,
         loadingState,
         setButtonLoading,
+        slippage,
+        setSlippage
       }}
     >
       {children}

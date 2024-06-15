@@ -1,7 +1,8 @@
 import { DNA } from "react-loader-spinner";
 
-const Loader = ({ data }: { data: string }) => (
+const Loader = ({ data }: { data: string  }) => (
   <div className="flex flex-col items-center justify-center h-96">
+   
     <DNA
       visible={true}
       height="80"

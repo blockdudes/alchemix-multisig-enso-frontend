@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import logo from "../../assets/alchemix-logo-round.svg";
 import { Connect } from "@/hooks/Connect";
 import Footer from "../footer/Footer";

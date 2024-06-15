@@ -1,3 +1,4 @@
+import { Assets } from "@/Types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "./checkbox";
-import { TokenData, Assets } from "@/Types";
+// import { Checkbox } from "./checkbox";
+// import { TokenData, Assets } from "@/Types";
 
 const ClaimableRewardsCard = ({ assets }: any) => {
   // Default totalValue for demonstration
@@ -26,11 +27,12 @@ const ClaimableRewardsCard = ({ assets }: any) => {
       item.tick ? total + item.dollarValue : total,
     0,
   );
+  console.log(assets)
 
   return (
     <>
       <div className="m-5 bg-white bg-opacity-15 backdrop-filter backdrop-blur-lg rounded-xl p-3">
-        <Card className="w-[400px] h-[480px]">
+        <Card className="w-[400px] h-[500px]">
           <CardHeader>
             <CardTitle>Claim Assets</CardTitle>
             <CardDescription>Assets available to claim</CardDescription>
